@@ -2,33 +2,41 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import EditPost from "./EditPost";
 
-const NewPost = ({ type = "New Post" }) => {
+const EditDraft = () => {
     const [searchParams] = useSearchParams();
     const [postId, setPostId] = useState(searchParams.get("id") || "");
     const [previousVersVis, setPreviousVersVis] = useState(false);
     const [prevVerList, setPrevVerList] = useState([]);
 
-    useEffect(() => {
-        if (postId !== "") {
-            // fetch data based on the postId
-            // update the content title and src
-        }
-        
-    }, [postId]);
+    const handlePreviousVer = () => {
+        // fetch the data and save it in previousVersion data state
+        setPrevVerList([
+            { id: 1, date: "28th July, 12:30pm" },
+            { id: 2, date: "27th July, 10:30am" },
+            { id: 1, date: "28th July, 12:30pm" },
+            { id: 2, date: "27th July, 10:30am" },
+        ]);
+        setPreviousVersVis(true);
+    };
 
     return (
         <>
             <div className="flex flex-col items-start my-8 w-[90%] md:w-[80%] mx-auto">
                 <div className="flex justify-between w-full">
-                    {!postId ? (
-                        <button
-                            type="button"
-                            className="button"
-                            // onClick={handleSaveAsDraft}
-                        >
-                            Save as Draft
-                        </button>
-                    ) : null}
+                    <button
+                        type="button"
+                        className="button"
+                        onClick={handleSaveAsDraft}
+                    >
+                        Save as Draft
+                    </button>
+                    <button
+                        type="button"
+                        className="border-none underline font-light"
+                        onClick={handlePreviousVer}
+                    >
+                        Previous Versions
+                    </button>
                 </div>
                 <EditPost />
                 <dialog
@@ -63,4 +71,4 @@ const NewPost = ({ type = "New Post" }) => {
     );
 };
 
-export default NewPost;
+export default EditDraft;

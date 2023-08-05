@@ -1,22 +1,83 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../AuthContext";
+import { useLoading } from "../../LoadingContext";
+import { useAxios } from "../../useAxios";
 import PostTab from "../Posts/PostTab";
+import FollowModal from "./FollowModal";
 import ListTab from "./ListTab";
 
 const Profile = (props) => {
+    const { user, jwtToken } = useAuth();
+    const { setLoading, setShowMessage } = useLoading();
     const { id } = useParams();
+    const navigate = useNavigate();
     const [details, setDetails] = useState({});
     const [myPosts, setMyPosts] = useState([]);
     const [selectedOption, setSelectedOption] = useState("Home");
     const [myLists, setMyLists] = useState([]);
+    const [modalVis, setModalVis] = useState(null);
+
+    const fetchDetails = useCallback(async () => {
+        setLoading(true);
+        let link = "/profile";
+        const res = await useAxios({
+            url: link,
+            method: "POST",
+            body: JSON.stringify({ id }),
+        });
+        setLoading(false);
+        if (res?.status) {
+            let data = res.data;
+            setDetails(data);
+        } else {
+            // for error
+            setShowMessage({ status: "error", message: res?.message });
+        }
+    }, [id]);
+
+    const fetchAuthorPosts = async () => {
+        setLoading(true);
+
+        let link = "";
+        const res = await useAxios({ url: link, method: "GET" });
+        setLoading(false);
+        if (res?.status) {
+            let data = res.data;
+            setMyPosts(data);
+        } else {
+            setShowMessage({ status: "error", message: res?.message });
+        }
+    };
+
+    const fetchMyLists = async () => {
+        setLoading(true);
+
+        let link = "";
+        const res = await useAxios({ url: link, method: "GET" });
+        setLoading(false);
+        if (res?.status) {
+            let data = res.data;
+            setMyLists(data);
+        } else {
+            setShowMessage({ status: "error", message: res?.message });
+        }
+    };
 
     useEffect(() => {
-        // fectch details from the token or somethin
-        setDetails({
-            name: "Harsh Patel",
-            username: "p-harsh",
-        });
+        if (isNaN(parseInt(id, 10))) {
+            if (!user || !jwtToken) {
+                navigate("/login");
+                return;
+            } else {
+                navigate("/dashboard");
+            }
+        }
+        fetchDetails();
         // fetch and set the my posts based on authorId
+        if (selectedOption === "Home") {
+            // fetchAuthorPosts()
+        }
         setMyPosts([
             {
                 id: 1,
@@ -26,11 +87,12 @@ const Profile = (props) => {
                 content:
                     "This is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
                 date: "17th July, 2023",
-                author: "blah",
+                author: "Autho 1",
                 likes: 24,
                 comments: 25,
                 views: 35,
                 readingTime: 2,
+                authorId: id,
             },
             {
                 id: 2,
@@ -39,43 +101,117 @@ const Profile = (props) => {
                 image: "",
                 content: "This is the content",
                 date: "29th July, 2023",
-                author: "blah",
+                author: "Author 1",
                 likes: 2,
                 comments: 5,
                 views: 5,
                 readingTime: 4,
+                authorId: id,
             },
         ]);
+        if (selectedOption === "List") {
+            // fetchMyLists()
+        }
         // fetch and set the lists created
         setMyLists([
             { name: "List 1", id: 1 },
             { name: "List 2", id: 2 },
         ]);
-    }, [selectedOption]);
+    }, [selectedOption, id]);
+    console.log(details);
+
+    const handleFollow = async (link) => {
+        if (details.id !== user.id) {
+            setLoading(true);
+            const res = await useAxios({
+                url: `/${link.toLowerCase()}`,
+                method: "POST",
+                body: JSON.stringify({ id: details.id }),
+            });
+            setLoading(false);
+            if (res?.status) {
+                fetchDetails();
+            } else {
+                setShowMessage({
+                    status: "error",
+                    message: res?.message + "-" + res?.response?.statustext,
+                });
+            }
+        }
+    };
     return (
         <>
             <div className="flex flex-col m-8">
+                {!!modalVis ? (
+                    <FollowModal
+                        modalVis={modalVis}
+                        setModalVis={setModalVis}
+                        {...details}
+                    />
+                ) : null}
                 <div className="text-xl text-center">
                     <p className="text-3xl font-semibold">{details.name}</p>
-                    <p className="font-light">@{details.username}</p>
+                    <p className="font-light">{details.email}</p>
                 </div>
-                {
-                    // check if it is not author and not following then show
-                    <>
+                <div
+                    className="flex justify-between
+                "
+                >
+                    <div className="flex items-center">
                         <button
                             type="button"
-                            className="bg-blue-500 text-white self-end"
-                        >
-                            Follow
-                        </button>
-                        {/* <button
-                            type="button"
-                            className="bg-slate-500 text-white self-end"
+                            onClick={() => setModalVis("Following")}
                         >
                             Following
-                        </button> */}
-                    </>
-                }
+                            <strong>
+                                {" "}
+                                {details?.followed_user_ids
+                                    ? details?.followed_user_ids.length
+                                    : 0}
+                            </strong>
+                        </button>
+                        <button
+                            className="m-2"
+                            type="button"
+                            onClick={() => setModalVis("Followed")}
+                        >
+                            Followed
+                            <strong>
+                                {" "}
+                                {details?.followed_by_user_ids
+                                    ? details?.followed_by_user_ids.length
+                                    : 0}
+                            </strong>
+                        </button>
+                    </div>
+                    {user?.id &&
+                    details?.id &&
+                    user?.id == details?.id ? null : (
+                        // check if it is not author and not following then show
+                        <>
+                            {details?.followed_by_user_ids &&
+                            details?.followed_by_user_ids.indexOf(
+                                parseInt(user?.id, 10)
+                            ) !== -1 ? (
+                                <button
+                                    type="button"
+                                    className="bg-slate-200 text-black self-end"
+                                    onClick={() => handleFollow("Unfollow")}
+                                >
+                                    Unfollow
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="bg-blue-500 text-white self-end"
+                                    onClick={() => handleFollow("Follow")}
+                                >
+                                    Follow
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
 
                 <div className="flex justify-start border-b-2 py-2 my-2">
                     <button
@@ -87,15 +223,17 @@ const Profile = (props) => {
                     >
                         Home
                     </button>
-                    <button
-                        type="button"
-                        className={`mx-2 border-none ${
-                            selectedOption === "List" ? "underline" : ""
-                        }`}
-                        onClick={() => setSelectedOption("List")}
-                    >
-                        List
-                    </button>
+                    {id == details.id ? (
+                        <button
+                            type="button"
+                            className={`mx-2 border-none ${
+                                selectedOption === "List" ? "underline" : ""
+                            }`}
+                            onClick={() => setSelectedOption("List")}
+                        >
+                            List
+                        </button>
+                    ) : null}
                 </div>
                 {selectedOption === "Home" ? (
                     <>
@@ -112,12 +250,15 @@ const Profile = (props) => {
                             })}
                         </div>
                         <div>
-                            <button
-                                type="button"
-                                className="bg-slate-400 text-white"
-                            >
-                                Saved Posts
-                            </button>
+                            {id == details.id ? (
+                                <button
+                                    onClick={() => navigate("/drafts")}
+                                    type="button"
+                                    className="bg-slate-400 text-white"
+                                >
+                                    Drafts
+                                </button>
+                            ) : null}
                         </div>
                     </>
                 ) : (

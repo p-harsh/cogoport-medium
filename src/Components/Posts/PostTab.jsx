@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../AuthContext";
+import Image from "../../assets/image_3.png";
 
 const PostTab = (props) => {
+    const { user } = useAuth();
     const navigate = useNavigate();
     const {
         author,
         date,
         title,
         content,
-        image,
+        image = Image,
         views,
         likes,
         comments,
         id = "",
         readingTime,
+        authorId,
     } = props;
 
     const [saveLaterVisible, setSaveLaterVisible] = useState(false);
@@ -22,7 +26,7 @@ const PostTab = (props) => {
 
     const handleEditPost = () => {
         // move to edit page option
-        navigate(`/edit-post&id=${id}`);
+        navigate(`/edit-post?id=${id}`);
     };
 
     const handleDeletePost = () => {
@@ -43,10 +47,10 @@ const PostTab = (props) => {
     };
 
     const handleAddToList = () => {
-        if(newListVal !== ""){
+        if (newListVal !== "") {
             // check if another list with same name exists
             // send the data to array and get back the row of list set it in listArr
-            setListArr(prev => [...prev, {id:2, name: newListVal}]);
+            setListArr((prev) => [...prev, { id: 2, name: newListVal }]);
             setNewListVal("");
         }
     };
@@ -55,39 +59,44 @@ const PostTab = (props) => {
         // send the post id and list id to get saved
         // in case of correct saving
         setSaveLaterVisible(false);
-    }
+    };
 
     return (
         <div className="flex flex-col items-start p-4 border-2 rounded-lg my-4">
-            <div className="flex justify-between w-full">
+            <div className="flex justify-between w-full text-base font-light">
                 <div className="author mx-1">{author}</div>
                 <div className="date mx-1">{date}</div>
                 {/* show this depending on stored author id and id of the author post */}
                 <div className="ml-auto">
-                    <button
-                        type="button"
-                        className="mx-1"
-                        onClick={handleEditPost}
-                    >
-                        Edit
-                    </button>
-                    <button
-                        type="button"
-                        className="mx-1"
-                        onClick={handleDeletePost}
-                    >
-                        Delete
-                    </button>
+                    {authorId == user?.id ? (
+                        <>
+                            <button
+                                type="button"
+                                className="mx-1"
+                                onClick={handleEditPost}
+                            >
+                                Edit
+                            </button>
+
+                            <button
+                                type="button"
+                                className="mx-1"
+                                onClick={handleDeletePost}
+                            >
+                                Delete
+                            </button>
+                        </>
+                    ) : null}
                 </div>
             </div>
-            <div>
-                <div>
+            <div className="flex w-full max-h-24 overflow-hidden text-ellipsis">
+                <div className="w-full sm:w-9/12">
                     <div className="title">{title}</div>
-                    <p className="text-ellipsis max-h-12 overflow-hidden">
-                        {content}
-                    </p>
+                    <p className="text-ellipsis">{content}</p>
                 </div>
-                <img src={image} />
+                <div className="w-3/12 m-2 max-h-24 justify-center  rounded-lg overflow-hidden shadow-sm hidden sm:flex">
+                    <img src={Image} />
+                </div>
             </div>
             <div className="w-full flex justify-end">
                 <div className="py-1 px-2 relative">
@@ -142,7 +151,7 @@ const PostTab = (props) => {
                     <Link to={`/post/${id}`}>Read More</Link>
                 </button>
             </div>
-            <div className="flex justify-between w-full mb-2 flex-wrap">
+            <div className="flex justify-between w-full mb-2 flex-wrap text-base font-light">
                 <p>
                     Views : <strong>{views}</strong> Likes :{" "}
                     <strong>{likes}</strong> Comments :{" "}

@@ -1,82 +1,78 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Posts from "../Posts/Posts";
 
+export const topics = ["Javascript", "Typescript", "Health", "Food", "Science"];
+
 const Dashboard = () => {
-    const [selectedSearch, setSelectedSearch] = useState("Post");
+    const navigate = useNavigate();
+    const [selectedOption, setSelectedOption] = useState("All Posts");
+
+    useEffect(() => {
+        // If want to change somethings
+    }, []);
+
+    const handleSelectedOption = (topic) => {
+        let link = encodeURI(`/dashboard?tag=${topic}`);
+        navigate(link);
+        setSelectedOption(topic);
+    };
+    // console.log("RENDERS");
+
     return (
         <div className="m-4">
             {/* Search */}
-            <div>
-                <button className='m-1 bg-slate-100' type="button">Top Posts</button>
-                <button className='m-1 bg-slate-100' type="button">Recommended Posts</button>
-            </div>
-            <div className="search flex flex-row justify-center my-4">
-                {selectedSearch === "Topic" ? (
-                    <select
-                        name="search-topic"
-                        id="search-topic"
-                        className="border-2 mx-1 px-2"
-                        // onChange={(e) => handleSearchesChange(e, "topic")}
-                        // value={searches["topic"]}
-                    >
-                        <option value="None">None</option>
-                        <option value="Health">Health</option>
-                        <option value="Health">Health</option>
-                        <option value="Health">Health</option>
-                        <option value="Health">Health</option>
-                    </select>
-                ) : (
-                    <input
-                        className="border-2 mx-1 px-2"
-                        // onChange={(e) => handleSearchesChange(e, "author")}
-                        // value={searches["author"]}
-                        placeholder={selectedSearch}
-                        type="text"
-                        name="search-author"
-                        id="search-author"
-                    />
-                )}
-                <select
-                    name="search-topic"
-                    id="search-topic"
-                    className="border-2 mx-1 px-2"
-                    onChange={(e) => setSelectedSearch(e.target.value)}
-                    value={selectedSearch}
-                >
-                    <option value="Post">Post</option>
-                    <option value="Author">Author</option>
-                    <option value="Topic">Topic</option>
-                </select>
-                {/* <input
-                    className="border-2 mx-1 px-2"
-                    onChange={(e) => handleSearchesChange(e, "post")}
-                    value={searches["post"]}
-                    placeholder="Post"
-                    type="text"
-                    name="search-post"
-                    id="search-post"
-                />
-                <select
-                    name="search-topic"
-                    id="search-topic"
-                    className="border-2 mx-1 px-2"
-                    onChange={(e) => handleSearchesChange(e, "topic")}
-                    value={searches["topic"]}
-                >
-                    <option value="None">None</option>
-                    <option value="Health">Health</option>
-                    <option value="Health">Health</option>
-                    <option value="Health">Health</option>
-                    <option value="Health">Health</option>
-                </select> */}
+            <div className="flex justify-end">
                 <button
+                    className="m-1 p-1 bg-slate-100 border-[0.5px]"
                     type="button"
-                    // onClick={handleSearchSubmit}
+                    onClick={() => navigate("/top-posts")}
                 >
-                    Search
+                    Top Posts
+                </button>
+                <button
+                    className="m-1 p-1 bg-slate-100 border-[0.5px]"
+                    type="button"
+                    onClick={() => navigate("/recommended-posts")}
+                >
+                    Recommended Posts
+                </button>
+                <button
+                    className="m-1 p-1 bg-slate-100 border-[0.5px]"
+                    type="button"
+                    onClick={() => navigate("/similar-posts")}
+                >
+                    Similar Posts
                 </button>
             </div>
-            <Posts />
+            <div className="flex justify-start border-b-2 py-2 my-2 flex-wrap">
+                <button
+                    type="button"
+                    className={`mx-2 border-none ${
+                        selectedOption === "All Posts" ? "underline" : ""
+                    }`}
+                    onClick={() => {
+                        navigate("/dashboard");
+                        setSelectedOption("All Posts");
+                    }}
+                >
+                    All Posts
+                </button>
+                {topics.map((topic) => (
+                    <button
+                        type="button"
+                        className={`mx-2 border-none ${
+                            selectedOption === topic ? "underline" : ""
+                        }`}
+                        onClick={() => {
+                            handleSelectedOption(topic);
+                        }}
+                    >
+                        {topic}
+                    </button>
+                ))}
+            </div>
+            <Posts selectedOption={selectedOption} />
         </div>
     );
 };

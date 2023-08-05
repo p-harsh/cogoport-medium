@@ -1,10 +1,11 @@
 import { Formik } from "formik";
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
-import useAxios from "../../useAxios";
-
-let atleast10YearsOld = new Date();
-atleast10YearsOld.setFullYear(atleast10YearsOld.getFullYear() - 10);
+import { useLoading } from "../../LoadingContext";
+import { useAxios } from "../../useAxios";
+import { checkAuth } from "../../utils";
+import "./auth.css";
 
 const SignUpSchema = yup.object().shape({
     username: yup.string().required("Username is required"),
@@ -21,8 +22,45 @@ const SignUpSchema = yup.object().shape({
 });
 
 const SignUp = () => {
+    const { loading, setLoading, showMessage, setShowMessage } = useLoading();
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (
+            checkAuth()
+        ) {
+            navigate("/dashboard");
+        }
+    }, []);
+    const handleSubmit = (values) => {
+        async function Signup(values) {
+            setLoading(true);
+            const res = await useAxios({
+                url: "/signup",
+                method: "POST",
+                body: JSON.stringify(values),
+                headers: JSON.stringify({
+                    "Access-Control-Allow-Origin": "*",
+                }),
+            });
+            setLoading(false);
+            if (res?.status) {
+                setShowMessage({
+                    status: "success",
+                    message: "Signed Up SuccesFully, \n Please Login!!",
+                });
+                navigate("/login");
+            } else {
+                setShowMessage({
+                    status: "error",
+                    message: res?.message,
+                });
+                console.log("ERROR", res?.message);
+            }
+        }
+        Signup(values);
+    };
     return (
-        <div className="flex flex-col justify-center">
+        <div className="signup flex flex-col justify-center">
             <Formik
                 initialValues={{
                     username: "",
@@ -32,9 +70,7 @@ const SignUp = () => {
                     confirmPassword: "",
                 }}
                 validationSchema={SignUpSchema}
-                onSubmit={async(values) => {
-                    await useAxios({url: '/signup', })
-                }}
+                onSubmit={handleSubmit}
             >
                 {({
                     handleBlur,
@@ -64,7 +100,7 @@ const SignUp = () => {
                                     !!errors.username &&
                                     "border border-red-700"
                                 }`}
-                                placeholder="Enter your name"
+                                placeholder="Enter your Username"
                             />
                             {touched.username && !!errors.username && (
                                 <span className="text-xs text-red-700">
@@ -104,7 +140,7 @@ const SignUp = () => {
                                     !!errors.email &&
                                     "border border-red-700"
                                 }`}
-                                placeholder="email"
+                                placeholder="Email"
                             />
                             {touched.email && !!errors.email && (
                                 <span className="text-xs text-red-700">
@@ -114,12 +150,12 @@ const SignUp = () => {
                         </div>
                         <div className="mt-2">
                             <input
-                                type="text"
+                                type="password"
                                 name="password"
                                 value={values.password}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                autoComplete="password"
+                                autoComplete="Password"
                                 className={`block flex-1 border border-1 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 ${
                                     touched.password &&
                                     !!errors.password &&
@@ -135,7 +171,7 @@ const SignUp = () => {
                         </div>
                         <div className="mt-2">
                             <input
-                                type="text"
+                                type="password"
                                 name="confirmPassword"
                                 value={values.confirmPassword}
                                 onChange={handleChange}

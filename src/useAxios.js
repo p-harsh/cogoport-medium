@@ -1,36 +1,34 @@
 // useAxios hook
-
 import axios from "axios";
-import { useEffect, useState } from "react";
-
+import jwt from "jwt-decode";
 axios.defaults.baseURL = "http://localhost:3000";
 
-const useAxios = ({ url, method, body = null, headers = null }) => {
-    const [response, setResponse] = useState(null);
-    const [error, setError] = useState("");
-    const [loading, setloading] = useState(true);
-
-    const fetchData = () => {
-        async function fetchData() {
-            await axios[method](url, JSON.parse(headers), JSON.parse(body))
-                .then((res) => {
-                    setResponse(res.data);
-                })
-                .catch((err) => {
-                    setError(err);
-                })
-                .finally(() => {
-                    setloading(false);
-                });
-        }
-        fetchData();
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [method, url, body, headers]);
-
-    return { response, error, loading };
+export const useAxios = async ({
+    url,
+    method = "GET",
+    body = null,
+    headers = JSON.stringify({
+        "Access-Control-Allow-Origin": "*",
+        token: JSON.parse(localStorage.getItem("jwtToken")),
+    }),
+}) => {
+    return axios({
+        url,
+        method,
+        headers: JSON.parse(headers),
+        data: JSON.parse(body),
+    })
+        .then((res) => {
+            if (res?.headers["token"]) {
+                const token = res.headers.token;
+                const user = jwt(token); // decode your token here
+                localStorage.setItem("jwtToken", JSON.stringify(token));
+                localStorage.setItem("user", JSON.stringify(user));
+            }
+            console.log(res);
+            return res;
+        })
+        .catch((err) => {
+            return err;
+        });
 };
-
-export default useAxios;

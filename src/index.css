@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800&display=swap'); */
+
 /*
   1. Use a more-intuitive box-sizing model.
 */
@@ -65,22 +67,36 @@ h6 {
     isolation: isolate;
 }
 
-.markdown-content{
-  white-space: pre-wrap;
+.markdown-content {
+    white-space: pre-wrap;
 }
 
-button{
-  border: 2px solid #97979797;
-  border-radius: 0.375rem;
-  padding: 4px 8px;
-  cursor: pointer;
+button {
+    border: 2px solid #97979797;
+    border-radius: 0.375rem;
+    padding: 4px 8px;
+    cursor: pointer;
 }
 
-button:hover{
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+button:hover {
+    box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.1);
 }
 
-.title{
-  font-weight: 500;
-  font-size: 36px;
+.title {
+    font-weight: 500;
+    font-size: 36px;
+}
+
+dialog {
+    margin: auto;
+    box-shadow: 2px 2px 10px rgba(175, 175, 175, 0.514);
+    padding: 24px;
+    border-radius: 16px;
+    /* display: flex; */
+    flex-direction: column;
+    justify-content: center;
+    max-width: 80%;
+}
+dialog::backdrop{
+  background: #000000b3;;
 }

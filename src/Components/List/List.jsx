@@ -38,10 +38,10 @@ const List = () => {
                 author: "blah",
             },
         ]);
-    }, []);
+    }, [id]);
 
     return (
-        <div className="flex flex-col mx-4">
+        <div className="flex flex-col m-4">
             <div className="self-end ">
                 {isCopied ? (
                     <span className="bg-none text-sm text-green-600 mx-2 font-thin ">

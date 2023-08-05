@@ -1,0 +1,10 @@
+.signup form,
+.login form {
+    width: min(300px, 80%);
+}
+.signup form > *,
+.signup form input,
+.login form > *,
+.login form input {
+    width: 100%;
+}
