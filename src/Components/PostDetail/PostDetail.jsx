@@ -3,51 +3,53 @@ import ReactMarkdown from "react-markdown";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 import { useLoading } from "../../Context/LoadingContext";
-import Image from "../../assets/image_1.jpg";
+import { useAxios } from "../../useAxios";
+import { FavoriteIcon } from "../Icons/Icons";
 import getStripe from "../Stripe/getStripe";
 import CommentTab from "./CommentTab";
 import {
-    FavoriteIcon,
-    MS_IN_DAY,
     isUserPlanAllowed,
     postsReadDbInit,
+    updateReadList,
 } from "./PostDetail.helper";
 
 const PostDetail = () => {
     const modalRef = useRef(null);
-    const { setShowMessage } = useLoading();
+    const { setLoading, setShowMessage } = useLoading();
     const { user, jwtToken } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
     const [postDetail, setPostDetail] = useState({});
     const [showPriceModal, setShowPriceModal] = useState(false);
     const [writtenCommentValue, setWrittenCommentValue] = useState("");
-    const [comments, setComments] = useState([
-        {
-            date: "24th July 2023",
-            author: "Harsh Patel",
-            text: "This is good!!",
-        },
-        {
-            date: "26th July 2023",
-            author: "Patel",
-            text: "This is bad!!",
-        },
-        {
-            date: "29th July 2023",
-            author: "Harsh",
-            text: "This could be better!!",
-        },
-    ]);
 
     const handleModalOpening = () => {
         setShowPriceModal(true);
         modalRef.current.showModal();
     };
 
+    const fetchPostDetails = async () => {
+        setLoading(true);
+        let link = "/post/id";
+        const res = await useAxios({
+            url: link,
+            method: "POST",
+            body: JSON.stringify({ id: id }),
+        });
+        setLoading(false);
+        if (res?.status) {
+            setPostDetail(res?.data?.post);
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to Get Post Details",
+            });
+        }
+    };
+
     useEffect(() => {
         // fetch the data of post
-        // look at number of posts read
+        // look at number of posts read today
         let postsReadList = postsReadDbInit();
         // check how many posts are allowed from the local storage and have and array of 10 posts for this
         // check which plan user is on
@@ -57,40 +59,67 @@ const PostDetail = () => {
         }
 
         postsReadList = updateReadList(postsReadList);
-
+        fetchPostDetails();
         // fetch post details based on Id
-        setPostDetail({
-            id: 1,
-            title: "z",
-            topic: [],
-            image: "",
-            content:
-                " ## ref\nThis is the contentThis is the contentThis is the content\nThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
-            dateTime: "29th July, 2023, 12:24pm",
-            author: "blah",
-            likes: 24,
-            comments: 3,
-            views: 35,
-        });
     }, [id]);
 
-    const handleCommentPost = (e) => {
+    const handleCommentPost = async (e) => {
         // submit to the data and fetch the comments data again
-        setComments([
-            ...comments,
-            {
-                id: 4,
-                author: "Harsh",
-                text: writtenCommentValue,
-                date: new Date().toLocaleDateString(),
-            },
-        ]);
+        if (writtenCommentValue !== "") {
+            setLoading(true);
+            const res = await useAxios({
+                url: "/post/comment",
+                method: "POST",
+                body: JSON.stringify({ id: id, comment: writtenCommentValue }),
+            });
+            setLoading(false);
+            if (res?.status) {
+                fetchPostDetails();
+            } else {
+                setShowMessage({
+                    status: "error",
+                    message: "Failed to Comments",
+                });
+            }
+        }
         setWrittenCommentValue("");
     };
 
-    const handlePostLike = () => {
+    const handlePostLike = async () => {
         // send the data for like
         // fetch the data again
+        if (postDetail?.likes.find((e) => e == user.id)) {
+            // go to unlike
+            const res = await useAxios({
+                url: "/post/unlike",
+                method: "POST",
+                body: JSON.stringify({ id: id }),
+            });
+            if (res?.status) {
+                fetchPostDetails();
+            } else {
+                setShowMessage({
+                    status: "error",
+                    message: "Failed to Like the Image",
+                });
+            }
+        } else {
+            // go to like
+            // go to unlike
+            const res = await useAxios({
+                url: "/post/like",
+                method: "POST",
+                body: JSON.stringify({ id: id }),
+            });
+            if (res?.status) {
+                fetchPostDetails();
+            } else {
+                setShowMessage({
+                    status: "error",
+                    message: "Failed to Unlike the Image",
+                });
+            }
+        }
     };
 
     async function handleCheckout(price) {
@@ -170,14 +199,11 @@ const PostDetail = () => {
                 <p className="title block text-center text-4xl font-bold my-2">
                     {postDetail?.title}
                 </p>
-                {/* {postDetail?.image ? (
-                    ) : null} */}
-                <div className="w-[200px]">
-                    <img
-                        // src={postDetail?.image}
-                        src={Image}
-                    />
-                </div>
+                {postDetail?.image_url ? (
+                    <div className="w-[200px]">
+                        <img src={postDetail?.image_url} />
+                    </div>
+                ) : null}
                 <ReactMarkdown className="p-4 bg-gray-100 flex-1 prose rounded-lg lg:prose-xl markdown-content max-w-none">
                     {postDetail?.content}
                 </ReactMarkdown>
@@ -186,21 +212,33 @@ const PostDetail = () => {
                         Views : <strong>{postDetail?.views}</strong>
                         <strong className="flex items-center">
                             <button
-                                className="p-[2px] border-none cursor-pointer mr-2"
+                                className={`p-[2px] border-none cursor-pointer mr-2`}
                                 onClick={handlePostLike}
                             >
-                                <FavoriteIcon style={{ cursor: "pointer" }} />
+                                <FavoriteIcon
+                                    style={{ cursor: "pointer" }}
+                                    fill={`${
+                                        postDetail?.likes &&
+                                        postDetail?.likes.find(
+                                            (e) => e == user.id
+                                        )
+                                            ? "red"
+                                            : "black"
+                                    }`}
+                                />
                             </button>{" "}
-                            {postDetail?.likes}
+                            {postDetail?.likes?.length}
                         </strong>
                     </p>
                     <div className="flex flex-col items-end">
-                        <p>
+                        {/* <p>
                             Author : <strong>{postDetail?.author}</strong>{" "}
-                        </p>
+                        </p> */}
                         <p>
                             Published On :{" "}
-                            <strong>{postDetail?.dateTime}</strong>
+                            <strong>
+                                {postDetail?.updated_at?.split("T")[0]}
+                            </strong>
                         </p>
                     </div>
                 </div>
@@ -210,10 +248,13 @@ const PostDetail = () => {
                         <div className="self-stretch">
                             {/* <Comments/> */}
                             <p className="text-lg font-semibold">
-                                Comments ({comments.length})
+                                Comments ({postDetail?.commenters?.length})
                             </p>
-                            {comments.map((comment) => (
-                                <CommentTab {...comment} />
+                            {postDetail?.comment?.map((comment, ind) => (
+                                <CommentTab
+                                    author={postDetail?.commenters[ind]}
+                                    text={postDetail?.comment[ind]}
+                                />
                             ))}
                         </div>
                         <div className="flex self-stretch">

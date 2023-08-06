@@ -103,3 +103,11 @@
         transform: rotate(360deg);
     }
 }
+
+.prose p {
+    margin: 0;
+}
+
+.prose ul, .prose li{
+    margin-block: 0;
+}

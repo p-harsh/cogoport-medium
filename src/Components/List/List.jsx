@@ -10,6 +10,7 @@ const List = () => {
 
     useEffect(() => {
         // fetch based on the list id and author
+        // fetch from save for later if -1
         setListPosts([
             {
                 id: 1,
@@ -34,7 +35,17 @@ const List = () => {
     }, [id]);
 
     return (
-        <div className="flex flex-col m-4">
+        <div className="flex flex-col mx-auto my-4 w-[90%] sm:w-[80%] md:w-[70%]">
+            {id == -1 ? (
+                <p className="text-center font-medium text-xl">
+                    Saved For Later
+                </p>
+            ) : (
+                <p className="text-center font-medium text-xl">
+                    List 2
+                </p>
+            )}
+
             <div className="self-end ">
                 {isCopied ? (
                     <span className="bg-none text-sm text-green-600 mx-2 font-thin ">

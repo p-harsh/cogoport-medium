@@ -56,7 +56,7 @@ const router = createBrowserRouter([
                     { path: "/drafts", element: <Drafts /> },
                     { path: "/dashboard", element: <Dashboard /> },
                     { path: "/list/:id", element: <List /> },
-                    { path: "/edit-post/:id", element: <EditPost /> },
+                    { path: "/edit-post/:postId", element: <EditPost /> },
                     { path: "/edit-draft/:id", element: <EditDraft /> },
                     {
                         path: "/similar-posts",

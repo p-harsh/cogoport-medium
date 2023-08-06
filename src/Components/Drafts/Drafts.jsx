@@ -18,7 +18,7 @@ const Drafts = () => {
                 content:
                     "This is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
                 author: "blah",
-                date: "23rd July, 2023",
+                date: "23rd July, 2023, 12:30 pm",
             },
             {
                 id: 5,
@@ -27,7 +27,7 @@ const Drafts = () => {
                 image: "",
                 content: "This is the content",
                 author: "blah",
-                date: "25th July, 2023",
+                date: "25th July, 2023, 12:30 pm",
             },
             {
                 id: 6,
@@ -36,14 +36,35 @@ const Drafts = () => {
                 image: "",
                 content: "This is the content",
                 author: "blah",
-                date: "29th July, 2023",
+                date: "29th July, 2023, 12:30 pm",
+            },
+            {
+                id: 5,
+                title: "z",
+                topic: "",
+                image: "",
+                content: "This is the content",
+                author: "blah",
+                date: "25th July, 2023, 12:30 pm",
+            },
+            {
+                id: 6,
+                title: "z",
+                topic: "",
+                image: "",
+                content: "This is the content",
+                author: "blah",
+                date: "29th July, 2023, 12:30 pm",
             },
         ]);
     }, []);
 
     return (
         <>
-            <div className="flex flex-wrap gap-8 m-8">
+            <p className="font-semibold text-xl text-center mt-8 mb-4">
+                Saved As Drafts
+            </p>
+            <div className="flex flex-wrap gap-8 w-[90%] sm:w-[80%] md:w-[70%] mx-auto">
                 {draftData.map((draft) => {
                     return (
                         <>

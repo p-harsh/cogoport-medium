@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 import { TOPICS } from "../../constants";
 import { useAxios } from "../../useAxios";
+import { LogoutSVG, SearchSVG, WriteSVG} from "../Icons/Icons";
+import Search from "../Search/Search";
 import { initialSearch } from "./Navbar.constant";
-import { WriteSVG, handleSearchSubmit } from "./Navbar.helper";
+import { handleSearchSubmit } from "./Navbar.helper";
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -101,8 +103,11 @@ const Navbar = () => {
                             onClick={() =>
                                 handleSearchSubmit(searches, selectedSearch)
                             }
+                            title="Search"
                         >
-                            Search
+                            <span>
+                                <SearchSVG className="w-[28px] h-[28px] bg-slate-50" />
+                            </span>
                         </button>
                     </div>
                 }
@@ -121,6 +126,7 @@ const Navbar = () => {
                         <Link
                             className="hover:underline mx-2 flex items-center"
                             to={`/edit-post/-1`}
+                            title="Write a Post"
                         >
                             Write
                             <span className="ml-1">
@@ -137,8 +143,11 @@ const Navbar = () => {
                             to="/login"
                             className="hover:underline mx-2"
                             onClick={handleLogout}
+                            title="Logout"
                         >
-                            Logout
+                                <span>
+                                    <LogoutSVG className="w-[24px] h-[24px] bg-slate-50" />
+                                </span>
                         </Link>
                     </div>
                 ) : null}

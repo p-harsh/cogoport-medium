@@ -1,38 +1,83 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
 import Image from "../../assets/image_3.png";
+import { useAxios } from "../../useAxios";
+import { getWordsCount } from "../EditPost/Edit.helper";
+import { BookmarkSVG, DeleteSVG, EditSVG } from "../Icons/Icons";
 
 const PostTab = (props) => {
     const { user, jwtToken } = useAuth();
+    const { setShowMessage, setLoading } = useLoading();
     const navigate = useNavigate();
     const {
-        author,
-        date,
         title,
-        content,
-        image = Image,
+        body,
+        user_id,
+        description,
+        created_at,
+        updated_at,
         views,
         likes,
-        comments,
-        id = "",
-        readingTime,
-        authorId,
+        comment,
+        commenters,
+        id,
+
+        image_url,
     } = props;
 
+    console.log(props);
+
+    const [author, setAuthor] = useState({});
     const [saveLaterVisible, setSaveLaterVisible] = useState(false);
     const [listArr, setListArr] = useState([]);
     const [newListVal, setNewListVal] = useState("");
+
+    const fetchAuthor = async (user_id) => {
+        const res = await useAxios({
+            url: "/profile",
+            method: "POST",
+            body: JSON.stringify({ id: user_id }),
+        });
+        console.log(res);
+        if (res?.status) {
+            setAuthor(res?.data);
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to fetch Author data",
+            });
+        }
+    };
+
+    useEffect(() => {
+        fetchAuthor(user_id);
+    }, []);
 
     const handleEditPost = () => {
         // move to edit page option
         navigate(`/edit-post/${id}`);
     };
 
-    const handleDeletePost = () => {
+    const handleDeletePost = async () => {
+        setLoading(true);
+        const res = await useAxios({
+            url: "/post/delete",
+            method: "DELETE",
+            body: JSON.stringify({ id }),
+        });
+        setLoading(false);
+        if (res?.status) {
+            navigate(0);
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to Delete Post",
+            });
+        }
         // send the request and refresh the page
         // reload the page after that
-        navigate(0);
     };
     const handleSaveLater = () => {
         if (saveLaterVisible === false) {
@@ -64,26 +109,35 @@ const PostTab = (props) => {
     return (
         <div className="flex flex-col items-start p-4 border-2 rounded-lg my-4">
             <div className="flex justify-between w-full text-base font-light">
-                <div className="author mx-1">{author}</div>
-                <div className="date mx-1">{date}</div>
+                <div className="author mx-1">{author.name}</div>
+                <div className="date mx-1">{created_at?.split("T")[0]}</div>
                 {/* show this depending on stored author id and id of the author post */}
                 <div className="ml-auto">
-                    {authorId == user?.id ? (
+                    {user_id == user?.id ? (
                         <>
                             <button
                                 type="button"
-                                className="mx-1"
+                                className="mx-1 border-slate-200"
                                 onClick={handleEditPost}
+                                title="Edit Post"
                             >
-                                Edit
+                                <span>
+                                    <EditSVG className="w-[24px] h-[24px]" />
+                                </span>
                             </button>
 
                             <button
                                 type="button"
-                                className="mx-1"
+                                className="mx-1 border-slate-200"
                                 onClick={handleDeletePost}
+                                title="Delete Post"
                             >
-                                Delete
+                                <span>
+                                    <DeleteSVG
+                                        className="w-[24px] h-[24px]"
+                                        fill="#474747"
+                                    />
+                                </span>
                             </button>
                         </>
                     ) : null}
@@ -91,22 +145,25 @@ const PostTab = (props) => {
             </div>
             <div className="flex w-full max-h-24 overflow-hidden text-ellipsis">
                 <div className="w-full sm:w-9/12">
-                    <div className="title">{title}</div>
-                    <p className="text-ellipsis">{content}</p>
+                    <div className="font-semibold text-lg">{title}</div>
+                    <p className="text-ellipsis">{body}</p>
                 </div>
                 <div className="w-3/12 m-2 max-h-24 justify-center  rounded-lg overflow-hidden shadow-sm hidden sm:flex">
-                    <img src={Image} />
+                    <img src={image_url} />
                 </div>
             </div>
-            <div className="w-full flex justify-end">
-                <div className="py-1 px-2 relative">
+            <div className="w-full flex justify-end items-center mt-2">
+                <div className="px-1 relative">
                     {user && jwtToken ? (
                         <button
                             type="button"
-                            className="border-none underline"
+                            className="underline border-2 border-slate-200 p-1"
                             onClick={handleSaveLater}
+                            title="Save to List"
                         >
-                            Save for Later
+                            <span>
+                                <BookmarkSVG className="w-[24px] h-[24px] bg-slate-50" />
+                            </span>
                         </button>
                     ) : null}
                     <div
@@ -155,11 +212,12 @@ const PostTab = (props) => {
             </div>
             <div className="flex justify-between w-full mb-2 flex-wrap text-base font-light">
                 <p>
-                    Views : <strong>{views}</strong> Likes :{" "}
-                    <strong>{likes}</strong> Comments :{" "}
-                    <strong>{comments}</strong>
+                    Views : <strong>{2}</strong> Likes : <strong>{likes?.length}</strong>{" "}
+                    Comments : <strong>{commenters?.length}</strong>
                 </p>
-                <p className="">{readingTime} minute read</p>
+                <p className="">
+                    {Math.round(getWordsCount(body) / 265)} minute read
+                </p>
             </div>
         </div>
     );

@@ -38,12 +38,11 @@ const Profile = (props) => {
 
     const fetchAuthorPosts = async () => {
         setLoading(true);
-
-        let link = "";
-        const res = await useAxios({ url: link, method: "GET" });
+        let link = "post/search/user_id";
+        const res = await useAxios({ url: link, method: "POST", body: JSON.stringify({id})});
         setLoading(false);
         if (res?.status) {
-            let data = res.data;
+            let data = res?.data?.posts;
             setMyPosts(data);
         } else {
             setShowMessage({ status: "error", message: res?.message });
@@ -76,39 +75,8 @@ const Profile = (props) => {
         fetchDetails();
         // fetch and set the my posts based on authorId
         if (selectedOption === "Home") {
-            // fetchAuthorPosts()
+            fetchAuthorPosts();
         }
-        setMyPosts([
-            {
-                id: 1,
-                title: "z",
-                topic: [],
-                image: "",
-                content:
-                    "This is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
-                date: "17th July, 2023",
-                author: "Autho 1",
-                likes: 24,
-                comments: 25,
-                views: 35,
-                readingTime: 2,
-                authorId: id,
-            },
-            {
-                id: 2,
-                title: "z",
-                topic: [],
-                image: "",
-                content: "This is the content",
-                date: "29th July, 2023",
-                author: "Author 1",
-                likes: 2,
-                comments: 5,
-                views: 5,
-                readingTime: 4,
-                authorId: id,
-            },
-        ]);
         if (selectedOption === "List") {
             // fetchMyLists()
         }
@@ -118,7 +86,6 @@ const Profile = (props) => {
             { name: "List 2", id: 2 },
         ]);
     }, [selectedOption, id]);
-    console.log(details);
 
     const handleFollow = async (link) => {
         if (details.id !== user.id) {

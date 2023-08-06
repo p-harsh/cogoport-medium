@@ -12,6 +12,7 @@ export const useAxios = async ({
         token: JSON.parse(localStorage.getItem("jwtToken")),
     }),
 }) => {
+    console.log("BODY BODY", body);
     return axios({
         url,
         method,
