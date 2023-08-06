@@ -1,8 +1,7 @@
 # React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+-   Run `yarn install`
+-   Run `yarn dev`
+<hr/>
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+I have completed all the components that are necessary for whole of project there are components like `Drafts, Lists, Previos Version, Top Posts, Recommended Posts, Similar Posts` that are without any apis and contain the dummy data only
