@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
+import { useAuth } from "../../Context/AuthContext";
 
 const Drafts = () => {
     const { user, jwtToken, setUser, setJwtToken } = useAuth();
@@ -50,7 +50,7 @@ const Drafts = () => {
                             <div
                                 className="cursor-pointer shadow-xl p-4 rounded-lg hover:bg-slate-100"
                                 onClick={() =>
-                                    navigate("/edit-draft?id=" + draft.id)
+                                    navigate(`/edit-draft/${draft.id}`)
                                 }
                             >
                                 <div className="h-[200px] w-[150px] overflow-hidden">

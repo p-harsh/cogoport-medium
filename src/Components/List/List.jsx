@@ -1,19 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import PostTab from "../Posts/PostTab";
+import { handleListShare } from "./List.helper";
 
 const List = () => {
     const { id } = useParams();
     const [isCopied, setIsCopied] = useState(false);
     const [listPosts, setListPosts] = useState([]);
-
-    const handleListShare = () => {
-        navigator.clipboard.writeText(window.location.href);
-        setIsCopied(true);
-        setTimeout(() => {
-            setIsCopied(false);
-        }, 2000);
-    };
 
     useEffect(() => {
         // fetch based on the list id and author
@@ -51,7 +44,7 @@ const List = () => {
                 <button
                     type="button"
                     className="bg-zinc-200"
-                    onClick={handleListShare}
+                    onClick={() => handleListShare(setIsCopied)}
                 >
                     Share
                 </button>

@@ -2,7 +2,7 @@ import { Formik } from "formik";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
-import { useLoading } from "../../LoadingContext";
+import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 import { checkAuth } from "../../utils";
 import "./auth.css";
@@ -25,14 +25,12 @@ const SignUp = () => {
     const { loading, setLoading, showMessage, setShowMessage } = useLoading();
     const navigate = useNavigate();
     useEffect(() => {
-        if (
-            checkAuth()
-        ) {
+        if (checkAuth()) {
             navigate("/dashboard");
         }
     }, []);
     const handleSubmit = (values) => {
-        async function Signup(values) {
+        async function sendSignupData(values) {
             setLoading(true);
             const res = await useAxios({
                 url: "/signup",
@@ -57,7 +55,7 @@ const SignUp = () => {
                 console.log("ERROR", res?.message);
             }
         }
-        Signup(values);
+        sendSignupData(values);
     };
     return (
         <div className="signup flex flex-col justify-center">

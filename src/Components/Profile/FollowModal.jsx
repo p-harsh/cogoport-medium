@@ -1,36 +1,51 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
+import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 
 const FollowModal = ({
     modalVis,
     setModalVis,
     name,
-    username,
-    followed_user_ids = null,
-    followed_by_user_ids = null,
+    id,
+    followed_user_ids,
+    followed_by_user_ids,
 }) => {
+    const { user } = useAuth();
+    const { setLoading, setShowMessage } = useLoading();
     const navigate = useNavigate();
     const [idsDetails, setIdsDetails] = useState([]);
+
     useEffect(() => {
         if (modalVis === "Following") {
             // fetch the data using the followed_user_ids and username
-            setIdsDetails([
-                { id: 1, name: "John Doe" },
-                { id: 2, name: "Test 1" },
-                { id: 3, name: "Test 2" },
-            ]);
+            fetchProfiles(followed_user_ids);
         } else if (modalVis === "Followed") {
             // fetch the data using the followed_by_user_ids and username
-
-            setIdsDetails([
-                { id: 2, name: "Test 1" },
-                { id: 3, name: "Test 2" },
-                { id: 4, name: "Test 3" },
-            ]);
+            fetchProfiles(followed_by_user_ids);
         }
     }, []);
+
+    const fetchProfiles = async (userIds) => {
+        setLoading(true);
+        const res = await useAxios({
+            url: "/profiles",
+            method: "POST",
+            body: JSON.stringify({ ids: userIds }),
+        });
+        setLoading(false);
+        if (res?.status) {
+            setIdsDetails(res?.data?.profiles);
+        } else {
+            setModalVis(false);
+            setShowMessage({
+                status: "error",
+                message: res?.message + "-" + res?.response?.statusText,
+            });
+        }
+    };
+
     return (
         <dialog open={!!modalVis}>
             <div className="self-center">

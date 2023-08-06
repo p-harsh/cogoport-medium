@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import PostTab from "./PostTab";
+import { useLoading } from "../../Context/LoadingContext";
 
 const initialFilters = {
     author: "",
@@ -10,6 +11,7 @@ const initialFilters = {
     comments: "",
 };
 const Posts = ({ renderFilter = true, selectedOption = null }) => {
+    const {setLoading} = useLoading();
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [searchParams] = useSearchParams();
@@ -20,14 +22,12 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
     const filterComments = searchParams.get("f-comments") || "";
     const searchAuthor = searchParams.get("s-author") || "";
     const searchPost = searchParams.get("s-post") || "";
-    const searchTopic = searchParams.get("s-topic") || "None";
     const tag = searchParams.get("tag") || "";
 
     const [query, setQuery] = useState("");
     const [posts, setPosts] = useState([]);
     // to store filter data
     const [filters, setFilters] = useState(initialFilters);
-    // to store search data
 
     const fetchTopicPosts = useCallback(async () => {
         setLoading(true);

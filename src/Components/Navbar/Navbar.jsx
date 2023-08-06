@@ -1,31 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext";
+import { TOPICS } from "../../constants";
 import { useAxios } from "../../useAxios";
-import { checkAuth } from "../../utils";
-import { topics } from "../Dashboard";
-
-export const WriteSVG = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        height="48"
-        viewBox="0 -960 960 960"
-        width="48"
-        className="w-4 h-4"
-    >
-        <path d="M180-12q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h405l-60 60H180v600h600v-348l60-60v408q0 24-18 42t-42 18H180Zm300-360Zm182-352 43 42-285 284v86h85l286-286 42 42-303 304H360v-170l302-302Zm171 168L662-724l100-100q17-17 42.311-17T847-823l84 85q17 18 17 42.472T930-654l-97 98Z" />
-    </svg>
-);
-
-const initialSearch = {
-    author: "",
-    post: "",
-    topic: "None",
-};
+import { initialSearch } from "./Navbar.constant";
+import { WriteSVG, handleSearchSubmit } from "./Navbar.helper";
 
 const Navbar = () => {
+    const navigate = useNavigate();
     const { user, setUser, jwtToken, setJwtToken } = useAuth();
     const [selectedSearch, setSelectedSearch] = useState("post");
     const [searches, setSearches] = useState(initialSearch);
+
     const handleLogout = () => {
         useAxios({ url: "/logout", method: "POST" });
         localStorage.removeItem("jwtToken");
@@ -41,30 +27,18 @@ const Navbar = () => {
         setSearches(tmpSearch);
     };
 
-    const handleSearchSubmit = () => {
-        if (
-            (selectedSearch === "author" && searches["author"]) ||
-            (selectedSearch === "post" && searches["post"]) ||
-            (selectedSearch === "topic" && searches["topic"])
-        ) {
-            let link = encodeURI(
-                `/search?s-${selectedSearch.toLowerCase()}=${
-                    searches[selectedSearch.toLowerCase()]
-                }`
-            );
-            window.location.href = window.location.origin + link;
-        }
-    };
-
-    const userId = JSON.parse(localStorage.getItem("user"))?.id;
-
     return (
         <div className="w-full bg-slate-50 px-4 py-4 shadow-md flex justify-between items-center flex-wrap">
             <div className="flex gap-4 items-center sm:justify-between w-full sm:w-[90%] mx-auto flex-wrap justify-start">
                 {user && jwtToken ? (
-                    <a className="hover:underline" href="/dashboard">
+                    <Link className="hover:underline" to="/dashboard">
                         Dashboard
-                    </a>
+                    </Link>
+                ) : null}
+                {!user || !jwtToken ? (
+                    <Link className="hover:underline" to="/posts">
+                        Posts
+                    </Link>
                 ) : null}
                 {
                     <div className="search relative flex flex-row justify-start sm:justify-center my-1 flex-wrap">
@@ -79,7 +53,7 @@ const Navbar = () => {
                                 value={searches["topic"]}
                             >
                                 <option value="None">None</option>
-                                {topics.map((topic) => (
+                                {TOPICS.map((topic) => (
                                     <option value={topic}>{topic}</option>
                                 ))}
                             </select>
@@ -124,7 +98,9 @@ const Navbar = () => {
                         <button
                             type="button"
                             className="p-0 px-2 border-slate-100"
-                            onClick={handleSearchSubmit}
+                            onClick={() =>
+                                handleSearchSubmit(searches, selectedSearch)
+                            }
                         >
                             Search
                         </button>
@@ -132,38 +108,38 @@ const Navbar = () => {
                 }
                 {!user || !jwtToken ? (
                     <div>
-                        <a className="hover:underline mx-2" href="/login">
+                        <Link className="hover:underline mx-2" to="/login">
                             Login
-                        </a>
-                        <a className="hover:underline mx-2" href="/signup">
+                        </Link>
+                        <Link className="hover:underline mx-2" to="/signup">
                             Signup
-                        </a>
+                        </Link>
                     </div>
                 ) : null}
                 {user && jwtToken ? (
                     <div className="flex items-center">
-                        <a
+                        <Link
                             className="hover:underline mx-2 flex items-center"
-                            href={`/edit-post`}
+                            to={`/edit-post/-1`}
                         >
                             Write
                             <span className="ml-1">
                                 <WriteSVG />
                             </span>
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                             className="hover:underline mx-2"
-                            href={`/profile/${user.id}`}
+                            to={`/profile/${user.id}`}
                         >
                             Profile
-                        </a>
-                        <a
-                            href="/login"
+                        </Link>
+                        <Link
+                            to="/login"
                             className="hover:underline mx-2"
                             onClick={handleLogout}
                         >
                             Logout
-                        </a>
+                        </Link>
                     </div>
                 ) : null}
             </div>

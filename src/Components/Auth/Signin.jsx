@@ -2,10 +2,9 @@ import { Formik } from "formik";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
-import { useAuth } from "../../AuthContext";
-import { useLoading } from "../../LoadingContext";
+import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
-import { checkAuth, getUserId } from "../../utils";
 
 const SignInSchema = yup.object().shape({
     email: yup
@@ -22,7 +21,7 @@ const SignIn = () => {
 
     useEffect(() => {
         if (user && jwtToken) {
-            navigate("/dashboard");
+            navigate(-1);
         }
     }, []);
 
@@ -51,11 +50,12 @@ const SignIn = () => {
                             JSON.parse(localStorage.getItem("jwtToken"))
                         );
                     } else {
-                        console.log(res)
+                        console.log(res);
                         // for error
                         setShowMessage({
                             status: "error",
-                            message: res?.message+"\n"+res?.response?.statusText,
+                            message:
+                                res?.message + "\n" + res?.response?.statusText,
                         });
                     }
                 }}

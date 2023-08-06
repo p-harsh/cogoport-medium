@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Posts from "../Posts/Posts";
-
-export const topics = ["Javascript", "Typescript", "Health", "Food", "Science"];
+import { TOPICS } from "../../constants";
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const [selectedOption, setSelectedOption] = useState("All Posts");
 
     useEffect(() => {
-        // If want to change somethings
+        // If want to change somethings on render
     }, []);
 
     const handleSelectedOption = (topic) => {
@@ -17,7 +16,6 @@ const Dashboard = () => {
         navigate(link);
         setSelectedOption(topic);
     };
-    // console.log("RENDERS");
 
     return (
         <div className="m-4">
@@ -58,7 +56,7 @@ const Dashboard = () => {
                 >
                     All Posts
                 </button>
-                {topics.map((topic) => (
+                {TOPICS.map((topic) => (
                     <button
                         type="button"
                         className={`mx-2 border-none ${

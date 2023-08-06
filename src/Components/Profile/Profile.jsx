@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
-import { useLoading } from "../../LoadingContext";
+import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 import PostTab from "../Posts/PostTab";
 import FollowModal from "./FollowModal";
@@ -184,33 +184,35 @@ const Profile = (props) => {
                             </strong>
                         </button>
                     </div>
-                    {user?.id &&
-                    details?.id &&
-                    user?.id == details?.id ? null : (
-                        // check if it is not author and not following then show
-                        <>
-                            {details?.followed_by_user_ids &&
-                            details?.followed_by_user_ids.indexOf(
-                                parseInt(user?.id, 10)
-                            ) !== -1 ? (
-                                <button
-                                    type="button"
-                                    className="bg-slate-200 text-black self-end"
-                                    onClick={() => handleFollow("Unfollow")}
-                                >
-                                    Unfollow
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="bg-blue-500 text-white self-end"
-                                    onClick={() => handleFollow("Follow")}
-                                >
-                                    Follow
-                                </button>
-                            )}
-                        </>
-                    )}
+                    {user && jwtToken ? (
+                        user?.id &&
+                        details?.id &&
+                        user?.id == details?.id ? null : (
+                            // check if it is not author and not following then show
+                            <>
+                                {details?.followed_by_user_ids &&
+                                details?.followed_by_user_ids.indexOf(
+                                    parseInt(user?.id, 10)
+                                ) !== -1 ? (
+                                    <button
+                                        type="button"
+                                        className="bg-slate-200 text-black self-end"
+                                        onClick={() => handleFollow("Unfollow")}
+                                    >
+                                        Unfollow
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="bg-blue-500 text-white self-end"
+                                        onClick={() => handleFollow("Follow")}
+                                    >
+                                        Follow
+                                    </button>
+                                )}
+                            </>
+                        )
+                    ) : null}
                 </div>
 
                 <div className="flex justify-start border-b-2 py-2 my-2">
@@ -223,16 +225,18 @@ const Profile = (props) => {
                     >
                         Home
                     </button>
-                    {id == details.id ? (
-                        <button
-                            type="button"
-                            className={`mx-2 border-none ${
-                                selectedOption === "List" ? "underline" : ""
-                            }`}
-                            onClick={() => setSelectedOption("List")}
-                        >
-                            List
-                        </button>
+                    {user && jwtToken ? (
+                        user.id == details.id ? (
+                            <button
+                                type="button"
+                                className={`mx-2 border-none ${
+                                    selectedOption === "List" ? "underline" : ""
+                                }`}
+                                onClick={() => setSelectedOption("List")}
+                            >
+                                List
+                            </button>
+                        ) : null
                     ) : null}
                 </div>
                 {selectedOption === "Home" ? (
@@ -250,14 +254,16 @@ const Profile = (props) => {
                             })}
                         </div>
                         <div>
-                            {id == details.id ? (
-                                <button
-                                    onClick={() => navigate("/drafts")}
-                                    type="button"
-                                    className="bg-slate-400 text-white"
-                                >
-                                    Drafts
-                                </button>
+                            {user && jwtToken ? (
+                                user.id == details.id ? (
+                                    <button
+                                        onClick={() => navigate("/drafts")}
+                                        type="button"
+                                        className="bg-slate-400 text-white"
+                                    >
+                                        Drafts
+                                    </button>
+                                ) : null
                             ) : null}
                         </div>
                     </>

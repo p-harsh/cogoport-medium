@@ -12,8 +12,22 @@ const LoadingContext = createContext({
     setLoading: null,
     showMessage: null,
     setShowMessage: null,
-    // message: null,
 });
+
+const LoadingElement = () => (
+    <div className="loader-container">
+        <div className="lds-roller">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+);
 
 export function LoadingProvider({ children }) {
     const [loading, setLoading] = useState(false);
@@ -37,6 +51,13 @@ export function LoadingProvider({ children }) {
                     {showMessage?.message}
                 </div>
             );
+        } else {
+            // want to render some special kind of pop up message
+            return (
+                <div className={showMessage?.className}>
+                    {showMessage?.message}
+                </div>
+            );
         }
     }, [showMessage]);
 
@@ -44,20 +65,7 @@ export function LoadingProvider({ children }) {
     return (
         <LoadingContext.Provider value={value}>
             {children}
-            {value.loading ? (
-                <div className="loader-container">
-                    <div className="lds-roller">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                </div>
-            ) : null}
+            {value.loading ? <LoadingElement /> : null}
 
             {!!showMessage ? (
                 <div className="message-container">{renderMessage()}</div>

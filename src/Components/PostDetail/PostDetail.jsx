@@ -1,25 +1,17 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
-import { useLoading } from "../../LoadingContext";
+import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
+import Image from "../../assets/image_1.jpg";
 import getStripe from "../Stripe/getStripe";
 import CommentTab from "./CommentTab";
-
-export const MS_IN_DAY = 86400000;
-
-export const FavoriteIcon = ({ fill, classname }) => (
-    <svg
-        fill={fill}
-        className={classname}
-        xmlns="http://www.w3.org/2000/svg"
-        height="24"
-        viewBox="0 -960 960 960"
-        width="24"
-    >
-        <path d="m480-121-41-37q-106-97-175-167.5t-110-126Q113-507 96.5-552T80-643q0-90 60.5-150.5T290-854q57 0 105.5 27t84.5 78q42-54 89-79.5T670-854q89 0 149.5 60.5T880-643q0 46-16.5 91T806-451.5q-41 55.5-110 126T521-158l-41 37Z" />
-    </svg>
-);
+import {
+    FavoriteIcon,
+    MS_IN_DAY,
+    isUserPlanAllowed,
+    postsReadDbInit,
+} from "./PostDetail.helper";
 
 const PostDetail = () => {
     const modalRef = useRef(null);
@@ -51,59 +43,22 @@ const PostDetail = () => {
     const handleModalOpening = () => {
         setShowPriceModal(true);
         modalRef.current.showModal();
-    }
+    };
 
     useEffect(() => {
         // fetch the data of post
         // look at number of posts read
-        let postsReadList = JSON.parse(localStorage.getItem("postsRead"));
-        if (!postsReadList) {
-            postsReadList = Array(10).fill({
-                timestamp: new Date().getTime() - MS_IN_DAY,
-            });
-            localStorage.setItem("postsRead", JSON.stringify(postsReadList));
-        }
-        if (!localStorage.getItem("plan")) {
-            localStorage.setItem("plan", "free");
-        }
+        let postsReadList = postsReadDbInit();
         // check how many posts are allowed from the local storage and have and array of 10 posts for this
         // check which plan user is on
-        let flag = true;
-        if (
-            !localStorage.getItem("plan") ||
-            (localStorage.getItem("plan") &&
-                localStorage.getItem("plan") == "free")
-        ) {
-            if (new Date().getTime() - postsReadList[0].timestamp < MS_IN_DAY) {
-                // show pricing modal to pay
-                flag = false;
-                handleModalOpening();
-            }
-        } else if (localStorage.getItem("plan") === "30") {
-            if (new Date().getTime() - postsReadList[2].timestamp < MS_IN_DAY) {
-                // show pricing modal to pay
-                flag = false;
-                handleModalOpening();
-            }
-        } else if (localStorage.getItem("plan") === "50") {
-            if (new Date().getTime() - postsReadList[4].timestamp < MS_IN_DAY) {
-                // show pricing modal to pay
-                flag = false;
-                handleModalOpening();
-            }
-        } else if (localStorage.getItem("plan") === "100") {
-            if (new Date().getTime() - postsReadList[9].timestamp < MS_IN_DAY) {
-                // show pricing modal to pay
-                flag = false;
-                handleModalOpening();
-            }
+        if (!isUserPlanAllowed(postsReadList)) {
+            handleModalOpening();
+            return;
         }
-        if (!flag) return;
 
-        postsReadList.pop();
-        postsReadList.unshift({ timestamp: new Date().getTime() });
-        localStorage.setItem("postsRead", JSON.stringify(postsReadList));
+        postsReadList = updateReadList(postsReadList);
 
+        // fetch post details based on Id
         setPostDetail({
             id: 1,
             title: "z",
@@ -193,19 +148,19 @@ const PostDetail = () => {
                     </p>
                     <div className="flex flex-wrap justify-center w-full mx-auto">
                         <div
-                            className="w-[100px] p-2 m-2 border-2 border-slate-100 rounded-lg shadow-md cursor-pointer"
+                            className="w-[100px] p-2 m-2 border-2 border-slate-100 rounded-lg shadow-md cursor-pointer hover:bg-slate-100"
                             onClick={() => handleCheckout(30)}
                         >
                             30 Rupees for 3 Posts per day
                         </div>
                         <div
-                            className="w-[100px] p-2 m-2 border-2 border-slate-100 rounded-lg shadow-md cursor-pointer"
+                            className="w-[100px] p-2 m-2 border-2 border-slate-100 rounded-lg shadow-md cursor-pointer hover:bg-slate-100"
                             onClick={() => handleCheckout(50)}
                         >
                             50 Rupees for 5 Posts per day
                         </div>
                         <div
-                            className="w-[100px] p-2 m-2 border-2 border-slate-100 rounded-lg shadow-md cursor-pointer"
+                            className="w-[100px] p-2 m-2 border-2 border-slate-100 rounded-lg shadow-md cursor-pointer hover:bg-slate-100"
                             onClick={() => handleCheckout(100)}
                         >
                             100 Rupees for 10 Posts per day
@@ -215,9 +170,14 @@ const PostDetail = () => {
                 <p className="title block text-center text-4xl font-bold my-2">
                     {postDetail?.title}
                 </p>
-                {postDetail?.image ? (
-                    <img width="100%" src={postDetail?.image} />
-                ) : null}
+                {/* {postDetail?.image ? (
+                    ) : null} */}
+                <div className="w-[200px]">
+                    <img
+                        // src={postDetail?.image}
+                        src={Image}
+                    />
+                </div>
                 <ReactMarkdown className="p-4 bg-gray-100 flex-1 prose rounded-lg lg:prose-xl markdown-content max-w-none">
                     {postDetail?.content}
                 </ReactMarkdown>
@@ -245,31 +205,37 @@ const PostDetail = () => {
                     </div>
                 </div>
 
-                <div className="self-stretch">
-                    {/* <Comments/> */}
-                    <p className="text-lg font-semibold">
-                        Comments ({comments.length})
-                    </p>
-                    {comments.map((comment) => (
-                        <CommentTab {...comment} />
-                    ))}
-                </div>
-                <div className="flex self-stretch">
-                    <input
-                        type="text"
-                        className="w-full flex-1 p-4 border-2 rounded-md"
-                        placeholder="Enter a Comment..."
-                        value={writtenCommentValue}
-                        onChange={(e) => setWrittenCommentValue(e.target.value)}
-                    />
-                    <button
-                        type="button"
-                        className="self-center ml-4 bg-slate-200"
-                        onClick={handleCommentPost}
-                    >
-                        Post
-                    </button>
-                </div>
+                {user && jwtToken ? (
+                    <>
+                        <div className="self-stretch">
+                            {/* <Comments/> */}
+                            <p className="text-lg font-semibold">
+                                Comments ({comments.length})
+                            </p>
+                            {comments.map((comment) => (
+                                <CommentTab {...comment} />
+                            ))}
+                        </div>
+                        <div className="flex self-stretch">
+                            <input
+                                type="text"
+                                className="w-full flex-1 p-4 border-2 rounded-md"
+                                placeholder="Enter a Comment..."
+                                value={writtenCommentValue}
+                                onChange={(e) =>
+                                    setWrittenCommentValue(e.target.value)
+                                }
+                            />
+                            <button
+                                type="button"
+                                className="self-center ml-4 bg-slate-200"
+                                onClick={handleCommentPost}
+                            >
+                                Post
+                            </button>
+                        </div>
+                    </>
+                ) : null}
             </div>
         </>
     );

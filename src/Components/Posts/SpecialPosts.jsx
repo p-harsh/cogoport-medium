@@ -5,7 +5,7 @@ export const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-const TopPosts = ({ type }) => {
+const SpecialPosts = ({ type }) => {
     const [posts, setPosts] = useState([]);
     useEffect(() => {
         //
@@ -67,4 +67,4 @@ const TopPosts = ({ type }) => {
     );
 };
 
-export default TopPosts;
+export default SpecialPosts;

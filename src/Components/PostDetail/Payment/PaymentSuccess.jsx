@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useLoading } from "../../LoadingContext";
+import { useLoading } from "../../../Context/LoadingContext";
 
 const PaymentSuccess = () => {
+    const navigate = useNavigate();
     const { price } = useParams();
     const { setShowMessage } = useLoading();
     useEffect(() => {

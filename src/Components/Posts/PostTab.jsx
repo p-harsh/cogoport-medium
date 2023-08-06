@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
+import { useAuth } from "../../Context/AuthContext";
 import Image from "../../assets/image_3.png";
 
 const PostTab = (props) => {
-    const { user } = useAuth();
+    const { user, jwtToken } = useAuth();
     const navigate = useNavigate();
     const {
         author,
@@ -26,7 +26,7 @@ const PostTab = (props) => {
 
     const handleEditPost = () => {
         // move to edit page option
-        navigate(`/edit-post?id=${id}`);
+        navigate(`/edit-post/${id}`);
     };
 
     const handleDeletePost = () => {
@@ -100,13 +100,15 @@ const PostTab = (props) => {
             </div>
             <div className="w-full flex justify-end">
                 <div className="py-1 px-2 relative">
-                    <button
-                        type="button"
-                        className="border-none underline"
-                        onClick={handleSaveLater}
-                    >
-                        Save for Later
-                    </button>
+                    {user && jwtToken ? (
+                        <button
+                            type="button"
+                            className="border-none underline"
+                            onClick={handleSaveLater}
+                        >
+                            Save for Later
+                        </button>
+                    ) : null}
                     <div
                         className={`absolute z-10 top-[48px] left-2 bg-white border-2 border-stone-200 rounded-md ${
                             saveLaterVisible ? "block" : "hidden"
