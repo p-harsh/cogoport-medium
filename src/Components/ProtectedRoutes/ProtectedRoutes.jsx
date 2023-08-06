@@ -19,12 +19,12 @@ const ProtectedRoute = () => {
         if (!lCToken || !lCUser) navigate("/login");
     }, []);
 
-    if (jwtToken !== lCToken) {
-        setJwtToken(JSON.parse(lCToken));
-    }
-    if (user?.id !== JSON.parse(lCUser)?.id) {
-        setUser(JSON.parse(lCUser)?.id);
-    }
+    // if (jwtToken !== lCToken) {
+    //     setJwtToken(JSON.parse(lCToken));
+    // }
+    // if (user?.id !== JSON.parse(lCUser)?.id) {
+    //     setUser(JSON.parse(lCUser)?.id);
+    // }
 
     /**
      * If user exists, return whatever you want

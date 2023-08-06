@@ -29,7 +29,7 @@ const EditDraft = () => {
     return (
         <>
             <div className="flex flex-col items-start my-8 w-[90%] md:w-[80%] mx-auto">
-                <EditPost {...data} />
+                <EditPost type='draft' {...data} />
             </div>
         </>
     );

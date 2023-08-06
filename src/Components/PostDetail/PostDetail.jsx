@@ -205,7 +205,7 @@ const PostDetail = () => {
                     </div>
                 ) : null}
                 <ReactMarkdown className="p-4 bg-gray-100 flex-1 prose rounded-lg lg:prose-xl markdown-content max-w-none">
-                    {postDetail?.content}
+                    {postDetail?.body}
                 </ReactMarkdown>
                 <div className="flex justify-between w-full my-2 flex-wrap">
                     <p>

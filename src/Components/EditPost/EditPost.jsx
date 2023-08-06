@@ -39,6 +39,7 @@ const EditPost = () => {
     return (
         <>
             <div className="flex flex-col items-start my-8 w-[90%] md:w-[80%] mx-auto">
+                {postId == -1 ? <Edit type="post" {...postData} /> : null}
                 {postData && postData.title ? (
                     <Edit type="post" {...postData} />
                 ) : null}
