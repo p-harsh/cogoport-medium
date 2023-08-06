@@ -97,35 +97,27 @@ const EditPost = ({
     const sendToAPI = async (data) => {
         let link, method;
         if (postId != -1) {
-            // let data;
-            let tmp = {};
-            tmp = {
-                title: postTitle,
-                body: postContent,
-                topic: postTopic,
-                id: postId
-            };
             // editing a post
-            // data.append("id", postId);
+            data.append("id", postId);
             link = "http://localhost:3000/post/edit";
-            // method = "POST";
+            method = "POST";
             await fetch(link, {
-                method: "POST",
-                body: JSON.stringify(tmp),
-                header: { token: jwtToken },
+                method: "PUT",
+                body: data,
+                headers: { token: jwtToken },
             })
                 .then((res) => res.json())
                 .then((data) => {
                     setShowMessage({
                         status: "success",
-                        message: "Post Edited Successfully",
+                        message: "Saved",
                     });
                     navigate("/dashboard");
                 })
                 .catch((err) => {
                     setShowMessage({
-                        status: "success",
-                        message: "Saved",
+                        status: "error",
+                        message: "Not able to Edit",
                     });
                 })
                 .finally(() => setLoading(false));
