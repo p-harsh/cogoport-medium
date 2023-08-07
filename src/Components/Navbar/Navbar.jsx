@@ -33,9 +33,9 @@ const Navbar = () => {
         <div className="w-full bg-slate-50 px-4 py-4 shadow-md flex justify-between items-center flex-wrap">
             <div className="flex gap-4 items-center sm:justify-between w-full sm:w-[90%] mx-auto flex-wrap justify-start">
                 {user && jwtToken ? (
-                    <Link className="hover:underline" to="/dashboard">
+                    <a className="hover:underline" href="/dashboard">
                         Dashboard
-                    </Link>
+                    </a>
                 ) : null}
                 {!user || !jwtToken ? (
                     <Link className="hover:underline" to="/posts">

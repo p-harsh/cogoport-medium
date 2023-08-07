@@ -14,12 +14,12 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [searchParams] = useSearchParams();
-    const filterAuthor = searchParams.get("f-author") || "";
-    const filterStartDate = searchParams.get("f-startDate") || "";
-    const filterEndDate = searchParams.get("f-startEnd") || "";
-    const searchAuthor = searchParams.get("s-author") || "";
-    const searchPost = searchParams.get("s-post") || "";
-    const tag = searchParams.get("tag") || "";
+    let filterAuthor = searchParams.get("f-author") || "";
+    let filterStartDate = searchParams.get("f-startDate") || "";
+    let filterEndDate = searchParams.get("f-endDate") || "";
+    let searchAuthor = searchParams.get("s-author") || "";
+    let searchPost = searchParams.get("s-post") || "";
+    let tag = searchParams.get("tag") || "";
 
     const [sortSelect, setSortSelect] = useState("None");
 
@@ -77,12 +77,64 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
 
     const removeTime = (d) => {
         let tmp = new Date(new Date(d).setHours(0, 0, 0)).getTime();
-        console.log(tmp);
         return tmp;
     };
 
+    const fetchPostsByAuthor = async (filterAuthor) => {
+        setLoading(true);
+        const res = await useAxios({
+            url: "/post/search/author",
+            method: "POST",
+            body: JSON.stringify({ name: filterAuthor }),
+        });
+        setLoading(false);
+        if (res?.status) {
+            return res?.data?.posts;
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to fetch Posts from Author Name",
+            });
+        }
+    };
+
+    const filterData = async (filterAuthor, filterStartDate, filterEndDate) => {
+        let tmpPosts;
+        if (filterAuthor) tmpPosts = await fetchPostsByAuthor(filterAuthor);
+        else tmpPosts = posts;
+        tmpPosts = tmpPosts.filter((post) => {
+            let start = filterStartDate,
+                end = filterEndDate;
+            if (!filterStartDate) {
+                // filter start is not provided keep it as min as possible
+                start = 0;
+            }
+            if (!filterEndDate) {
+                end = new Date();
+                end = end.setDate(end.getDate() + 1); // +1 to set time to EOD of today
+            } // as created date will always be less than current time
+            console.log(
+                removeTime(start),
+                removeTime(end),
+                new Date(post.created_at).getTime()
+            );
+            return (
+                new Date(post.created_at).getTime() >= removeTime(start) &&
+                new Date(post.created_at).getTime() <= removeTime(end)
+            );
+        });
+        console.log(tmpPosts);
+        setPosts(tmpPosts);
+    };
+
     useEffect(() => {
-        console.log("RENDERS");
+        filterAuthor = searchParams.get("f-author") || "";
+        filterStartDate = searchParams.get("f-startDate") || "";
+        filterEndDate = searchParams.get("f-endDate") || "";
+        searchAuthor = searchParams.get("s-author") || "";
+        searchPost = searchParams.get("s-post") || "";
+        tag = searchParams.get("tag") || "";
+
         if (
             !filterAuthor &&
             !filterStartDate &&
@@ -101,22 +153,10 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
             return;
         } else if (searchPost) {
             fetchAllPostsTitle();
+            return;
         }
         if (filterAuthor || filterStartDate || filterEndDate) {
-            let tmpPosts = [...posts];
-            tmpPosts = tmpPosts.filter((post) => {
-                let start = filterStartDate,
-                    end = filterEndDate;
-                if (!filterStartDate) {
-                    start = 0;
-                }
-                if (!filterEndDate) end = new Date(); // as created date will always be less than current time
-                return (
-                    removeTime(post.created_at) >= removeTime(start) &&
-                    removeTime(post.created_at) <= removeTime(end)
-                );
-            });
-            setPosts(tmpPosts);
+            filterData(filterAuthor, filterStartDate, filterEndDate);
         }
         setFilters({
             author: filterAuthor,
@@ -139,10 +179,10 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
     const handleFilterSubmit = () => {
         if (filters["author"] || filters["startDate"] || filters["endDate"]) {
             let link = encodeURI(
-                `${pathname}?f-author=${filters["author"]}&f-startDate=${filters["startDate"]}&f-endDate=${filters["endDate"]}}`
+                `${pathname}?f-author=${filters["author"]}&f-startDate=${filters["startDate"]}&f-endDate=${filters["endDate"]}`
             );
-            setQuery(link);
             navigate(link);
+            setQuery(link);
         }
     };
 

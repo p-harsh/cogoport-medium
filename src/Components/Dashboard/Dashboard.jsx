@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Posts from "../Posts/Posts";
 import { TOPICS } from "../../constants";
+import Posts from "../Posts/Posts";
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -50,7 +50,8 @@ const Dashboard = () => {
                         selectedOption === "All Posts" ? "underline" : ""
                     }`}
                     onClick={() => {
-                        navigate("/dashboard");
+                        window.location.href =
+                            window.location.origin + "/dashboard";
                         setSelectedOption("All Posts");
                     }}
                 >

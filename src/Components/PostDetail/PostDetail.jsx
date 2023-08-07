@@ -34,7 +34,7 @@ const PostDetail = () => {
         const res = await useAxios({
             url: link,
             method: "POST",
-            body: JSON.stringify({ id: id }),
+            body: JSON.stringify({ id: id, viewing: true }),
         });
         setLoading(false);
         if (res?.status) {

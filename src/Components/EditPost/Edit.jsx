@@ -126,7 +126,7 @@ const EditPost = ({
             // submitting a new post
             link = "http://localhost:3000/post/create";
             // method = "POST";
-        } else if (location.pathname.indexOf("edit-post") != -1) {
+        } else if (location.pathname.indexOf("edit-draft") != -1) {
             // submitting for a draft
         }
         await fetch(link, {

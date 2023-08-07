@@ -1,14 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
-
+import { useAxios } from "../../useAxios";
 const Drafts = () => {
     const { user, jwtToken, setUser, setJwtToken } = useAuth();
     const navigate = useNavigate();
     const autherId = user.id;
     const [draftData, setDraftData] = useState([]);
+
+    const handleFetchDrafts = async () => {
+        // submit to the data and fetch the comments data again
+        setLoading(true);
+        const res = await useAxios({
+            url: "/drafts",
+            method: "POST",
+            body: JSON.stringify({ id: id }),
+        });
+        setLoading(false);
+        if (res?.status) {
+            setDraftData(res?.data?.posts);
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to Fetch Drafts",
+            });
+        }
+    };
+
     useEffect(() => {
         // fetch all the draft data
+        // handleFetchDrafts()
         setDraftData([
             {
                 id: 4,

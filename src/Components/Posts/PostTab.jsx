@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 import { useLoading } from "../../Context/LoadingContext";
-import Image from "../../assets/image_3.png";
 import { useAxios } from "../../useAxios";
 import { getWordsCount } from "../EditPost/Edit.helper";
 import { BookmarkSVG, DeleteSVG, EditSVG } from "../Icons/Icons";
@@ -12,22 +11,20 @@ const PostTab = (props) => {
     const { setShowMessage, setLoading } = useLoading();
     const navigate = useNavigate();
     const {
-        title,
-        body,
+        title = "",
+        body = "",
         user_id,
-        description,
-        created_at,
-        updated_at,
-        views,
-        likes,
-        comment,
-        commenters,
+        description = "",
+        created_at = "",
+        updated_at = "",
+        views = 0,
+        likes = [],
+        comment = [],
+        commenters = [],
         id,
-
-        image_url,
+        image_url = null,
+        topic= "None"
     } = props;
-
-    console.log(props);
 
     const [author, setAuthor] = useState({});
     const [saveLaterVisible, setSaveLaterVisible] = useState(false);
@@ -91,17 +88,70 @@ const PostTab = (props) => {
         setSaveLaterVisible((prev) => !prev);
     };
 
-    const handleAddToList = () => {
-        if (newListVal !== "") {
-            // check if another list with same name exists
-            // send the data to array and get back the row of list set it in listArr
-            setListArr((prev) => [...prev, { id: 2, name: newListVal }]);
+    const addToTheList = async (listName) => {
+        setLoading(true);
+        const res = await useAxios({
+            url: "/list/add",
+            method: "POST",
+            body: JSON.stringify({ name: listName, id }),
+        });
+        if (res?.status) {
+            setListArr((prev) => [...prev, res?.data]);
             setNewListVal("");
+            setShowMessage({
+                status: "Success",
+                message: "List Added Succesfully",
+            });
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to add the New List",
+            });
         }
     };
 
-    const handleAddPostToList = (llstId) => {
+    const handleAddToList = async () => {
+        if (newListVal !== "") {
+            // check if another list with same name exists
+            if (listArr.find((list) => list.name === newListVal)) {
+                setShowMessage({
+                    status: "error",
+                    message: "Can't add same name list",
+                });
+                return;
+            }
+            // send the data to array and get back the row of list set it in listArr
+            await addToTheList(newListVal);
+        } else {
+            setShowMessage({ status: "error", message: "List can't be blank" });
+        }
+    };
+
+    const addPostToList = async (listId) => {
+        setLoading(true);
+        const res = await useAxios({
+            url: "/list/post/add",
+            method: "POST",
+            body: JSON.stringify({ id, listId }),
+        });
+        if (res?.status) {
+
+            setNewListVal("");
+            setShowMessage({
+                status: "Success",
+                message: "Post Added Succesfully",
+            });
+        } else {
+            setShowMessage({
+                status: "error",
+                message: "Failed to add Post to List",
+            });
+        }
+    };
+
+    const handleAddPostToList = async (listId) => {
         // send the post id and list id to get saved
+        await addPostToList(listId);
         // in case of correct saving
         setSaveLaterVisible(false);
     };
@@ -110,7 +160,12 @@ const PostTab = (props) => {
         <div className="flex flex-col items-start p-4 border-2 rounded-lg my-4">
             <div className="flex justify-between w-full text-base font-light">
                 <div className="author mx-1">{author.name}</div>
-                <div className="date mx-1">{created_at?.split("T")[0]}</div>
+                <div className="date mx-1 border-l-2 pl-2">
+                    {created_at && created_at.split("T")[0]}
+                </div>
+                <div className="date mx-1 font-medium border-l-2 border-slate-200 pl-2">
+                    {topic}
+                </div>
                 {/* show this depending on stored author id and id of the author post */}
                 <div className="ml-auto">
                     {user_id == user?.id ? (
@@ -171,12 +226,12 @@ const PostTab = (props) => {
                             saveLaterVisible ? "block" : "hidden"
                         }`}
                     >
-                        <p
+                        {/* <p
                             className="p-1 px-2 border-b-2 cursor-pointer hover:bg-slate-100"
                             onClick={() => handleAddPostToList(-1)}
                         >
                             Save for Later
-                        </p>
+                        </p> */}
                         {listArr.map((list) => (
                             <p
                                 key={list.id}
@@ -213,8 +268,9 @@ const PostTab = (props) => {
             </div>
             <div className="flex justify-between w-full mb-2 flex-wrap text-base font-light">
                 <p>
-                    Views : <strong>{2}</strong> Likes : <strong>{likes?.length}</strong>{" "}
-                    Comments : <strong>{commenters?.length}</strong>
+                    Views : <strong>{views}</strong> | Likes :{" "}
+                    <strong>{likes?.length}</strong> | Comments :{" "}
+                    <strong>{commenters?.length}</strong>
                 </p>
                 <p className="">
                     {Math.round(getWordsCount(body) / 265)} minute read
