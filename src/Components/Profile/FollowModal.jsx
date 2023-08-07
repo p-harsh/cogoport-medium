@@ -56,6 +56,7 @@ const FollowModal = ({
             {idsDetails.map((detail) => {
                 return (
                     <p
+                        key={detail.id}
                         className="p-2 hover:bg-slate-200 cursor-pointer"
                         onClick={() => {
                             navigate(`/profile/${detail.id}`);

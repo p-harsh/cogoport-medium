@@ -58,6 +58,7 @@ const Dashboard = () => {
                 </button>
                 {TOPICS.map((topic) => (
                     <button
+                        key={topic}
                         type="button"
                         className={`mx-2 border-none ${
                             selectedOption === topic ? "underline" : ""

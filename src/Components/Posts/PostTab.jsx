@@ -179,6 +179,7 @@ const PostTab = (props) => {
                         </p>
                         {listArr.map((list) => (
                             <p
+                                key={list.id}
                                 className="p-1 px-2 border-b-2 cursor-pointer hover:bg-slate-100"
                                 onClick={() => handleAddPostToList(list.id)}
                             >

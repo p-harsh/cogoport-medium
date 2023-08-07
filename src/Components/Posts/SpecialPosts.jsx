@@ -127,7 +127,7 @@ const SpecialPosts = ({ type }) => {
             </div>
             <div className="m-4">
                 {posts.map((post) => (
-                    <PostTab {...post} />
+                    <PostTab key={post.id} {...post} />
                 ))}
             </div>
         </div>

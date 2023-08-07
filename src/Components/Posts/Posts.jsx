@@ -75,6 +75,12 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
         }
     };
 
+    const removeTime = (d) => {
+        let tmp = new Date(new Date(d).setHours(0, 0, 0)).getTime();
+        console.log(tmp);
+        return tmp;
+    };
+
     useEffect(() => {
         console.log("RENDERS");
         if (
@@ -104,10 +110,10 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
                 if (!filterStartDate) {
                     start = 0;
                 }
-                if (!filterEndDate) end = Infinity;
+                if (!filterEndDate) end = new Date(); // as created date will always be less than current time
                 return (
-                    new Date(post.created_at).getTime() >= new Date(start) &&
-                    new Date(post.created_at).getTime() <= new Date(start)
+                    removeTime(post.created_at) >= removeTime(start) &&
+                    removeTime(post.created_at) <= removeTime(end)
                 );
             });
             setPosts(tmpPosts);
@@ -219,7 +225,7 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
                 {posts?.length > 0 ? (
                     <div className="m-4">
                         {posts.map((post) => (
-                            <PostTab {...post} />
+                            <PostTab key={post.id} {...post} />
                         ))}
                     </div>
                 ) : (

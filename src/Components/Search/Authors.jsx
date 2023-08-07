@@ -33,6 +33,7 @@ const Authors = ({ author }) => {
             {authorList.map((item) => {
                 return (
                     <div
+                        key={item.id}
                         className="flex items-center py-3 px-6 shadow-md w-fit rounded-lg mx-auto my-6 hover:bg-slate-100 cursor-pointer"
                         onClick={() => navigate(`/profile/${item.id}`)}
                     >

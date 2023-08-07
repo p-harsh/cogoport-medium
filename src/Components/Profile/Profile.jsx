@@ -214,7 +214,7 @@ const Profile = (props) => {
                             </p>
                             {myPosts.map((post) => {
                                 return (
-                                    <div className="my-2">
+                                    <div key={post.id} className="my-2">
                                         <PostTab {...post} />
                                     </div>
                                 );
@@ -239,7 +239,7 @@ const Profile = (props) => {
                         <div className="flex flex-col">
                             <ListTab name="Save for Later" id="-1" />
                             {myLists.map((list) => (
-                                <ListTab {...list} />
+                                <ListTab key={list.id} {...list} />
                             ))}
                         </div>
                     </>

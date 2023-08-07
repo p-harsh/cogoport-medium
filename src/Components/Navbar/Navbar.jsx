@@ -56,7 +56,7 @@ const Navbar = () => {
                             >
                                 <option value="None">None</option>
                                 {TOPICS.map((topic) => (
-                                    <option value={topic}>{topic}</option>
+                                    <option key={topic} value={topic}>{topic}</option>
                                 ))}
                             </select>
                         ) : null}

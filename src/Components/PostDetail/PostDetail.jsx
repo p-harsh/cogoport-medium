@@ -169,10 +169,10 @@ const PostDetail = () => {
                     >
                         ╳
                     </button>
-                    <p class="text-center font-medium">
+                    <p className="text-center font-medium">
                         Oops, want to read more
                     </p>
-                    <p class="text-center font-medium">
+                    <p className="text-center font-medium">
                         Select a Pricing Modal
                     </p>
                     <div className="flex flex-wrap justify-center w-full mx-auto">

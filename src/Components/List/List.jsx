@@ -61,7 +61,7 @@ const List = () => {
                 </button>
             </div>
             {listPosts.map((post) => (
-                <PostTab {...post} />
+                <PostTab key={post.id} {...post} />
             ))}
         </div>
     );
