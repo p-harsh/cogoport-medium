@@ -5,20 +5,25 @@ import { useAxios } from "../../useAxios";
 import Edit from "./Edit";
 import { endpoints } from "../../APIConfig/endpoint";
 
-const EditDraft = () => {
-    const { id } = useParams();
+const EditRevision = () => {
+    const { postId, id } = useParams();
     const { setLoading, setShowMessage } = useLoading();
-    const [draftData, setDraftData] = useState({});
+    const [revisionData, setRevisionData] = useState({});
 
-    const fetchDraftPost = async () => {
+    const fetchRevisionPost = async () => {
         setLoading(true);
-        const { res, error } = await useAxios({
-            url: endpoints.getPost,
+        let { res, error } = await useAxios({
+            url: endpoints.getRevisionDraft,
             method: "POST",
-            body: JSON.stringify({ id: id }),
+            body: JSON.stringify({ id: postId }),
         });
         setLoading(false);
-        if (res) setDraftData(res);
+        if (res) {
+            res = res.find(
+                (post) => post.id == id && post.article_id == postId
+            );
+            if (res?.id) setRevisionData(res);
+        }
 
         if (error)
             setShowMessage({
@@ -28,16 +33,18 @@ const EditDraft = () => {
     };
     useEffect(() => {
         // fetch on the basis of id of post and send to EditPost
-        if (id) fetchDraftPost();
-    }, [id]);
+        if (id) fetchRevisionPost();
+    }, [id, postId]);
 
     return (
         <>
             <div className="flex flex-col items-start my-8 w-[90%] md:w-[80%] mx-auto">
-                {draftData.id ? <Edit type="draft" {...draftData} /> : null}
+                {revisionData.id ? (
+                    <Edit type="draft" revision={true} {...revisionData} />
+                ) : null}
             </div>
         </>
     );
 };
 
-export default EditDraft;
+export default EditRevision;

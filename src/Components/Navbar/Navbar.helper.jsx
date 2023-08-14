@@ -12,10 +12,10 @@ export const handleSearchSubmit = (searches, selectedSearch) => {
             searches["topic"] &&
             searches["topic"] !== "None"
         )
-            link = encodeURI(`/search?tag=${searches["topic"].toLowerCase()}`);
+            link = encodeURI(`/search?tag=${searches["topic"]}`);
         else
             link = encodeURI(
-                `/search?s-${selectedSearch.toLowerCase()}=${
+                `/search?s-${selectedSearch}=${
                     searches[selectedSearch.toLowerCase()]
                 }`
             );

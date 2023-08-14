@@ -7,20 +7,19 @@ import { LogoutSVG, SearchSVG, WriteSVG} from "../Icons/Icons";
 import Search from "../Search/Search";
 import { initialSearch } from "./Navbar.constant";
 import { handleSearchSubmit } from "./Navbar.helper";
+import { endpoints } from "../../APIConfig/endpoint";
 
 const Navbar = () => {
     const navigate = useNavigate();
-    const { user, setUser, jwtToken, setJwtToken } = useAuth();
+    const { user, setUser } = useAuth();
     const [selectedSearch, setSelectedSearch] = useState("post");
     const [searches, setSearches] = useState(initialSearch);
 
     const handleLogout = () => {
-        useAxios({ url: "/logout", method: "POST" });
-        localStorage.removeItem("jwtToken");
+        useAxios({ url: endpoints.logout, method: "DELETE" });
         localStorage.removeItem("user");
         localStorage.removeItem("plan");
         setUser(null);
-        setJwtToken(null);
     };
 
     const handleSearchesChange = (e, topic) => {
@@ -32,12 +31,12 @@ const Navbar = () => {
     return (
         <div className="w-full bg-slate-50 px-4 py-4 shadow-md flex justify-between items-center flex-wrap">
             <div className="flex gap-4 items-center sm:justify-between w-full sm:w-[90%] mx-auto flex-wrap justify-start">
-                {user && jwtToken ? (
+                {user ? (
                     <a className="hover:underline" href="/dashboard">
                         Dashboard
                     </a>
                 ) : null}
-                {!user || !jwtToken ? (
+                {!user ? (
                     <Link className="hover:underline" to="/posts">
                         Posts
                     </Link>
@@ -111,7 +110,7 @@ const Navbar = () => {
                         </button>
                     </div>
                 }
-                {!user || !jwtToken ? (
+                {!user ? (
                     <div>
                         <Link className="hover:underline mx-2" to="/login">
                             Login
@@ -121,7 +120,7 @@ const Navbar = () => {
                         </Link>
                     </div>
                 ) : null}
-                {user && jwtToken ? (
+                {user ? (
                     <div className="flex items-center">
                         <Link
                             className="hover:underline mx-2 flex items-center"

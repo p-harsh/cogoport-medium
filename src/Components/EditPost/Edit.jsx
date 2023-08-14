@@ -1,37 +1,44 @@
 import React, { useCallback, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { BASE_URL, endpoints } from "../../APIConfig/endpoint";
 import { useAuth } from "../../Context/AuthContext";
 import { useLoading } from "../../Context/LoadingContext";
 import { TOPICS } from "../../constants";
 import { useAxios } from "../../useAxios";
 import { debounce } from "../../utils";
-import { getWordsCount } from "./Edit.helper";
+import { getDataInJSON, getWordsCount } from "./Edit.helper";
 
 const EditPost = ({
     type,
     title = "",
     body = "",
     topic = "None",
+    views = 0,
+    comment = [],
+    commenters = [],
+    id,
+    image_url = null,
+    // "file"
+    author = "",
+    published_at = "",
     user_id,
     description = "",
     created_at = "",
     updated_at = "",
-    views = "",
-    likes = "",
-    comment = [],
-    commenters = [],
-    id,
-    image_url,
+    minutes_to_read = 0,
+    post_comments = 0,
+    post_likes = 0,
+    revision = false,
 }) => {
-    const { user, jwtToken } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const { setLoading, setShowMessage } = useLoading();
     const { postId } = useParams();
     const location = useLocation();
     const [previousVersVis, setPreviousVersVis] = useState(false);
     const [prevVerList, setPrevVerList] = useState([]);
-    const [postContent, setPostContent] = useState(body);
+    const [postContent, setPostContent] = useState(description);
     const [postTitle, setPostTitle] = useState(title);
     const [postTopic, setPostTopic] = useState(topic);
     const [imgSrc, setImgSrc] = useState(image_url);
@@ -45,27 +52,80 @@ const EditPost = ({
     }, [postId]);
 
     const debouncedSaving = useCallback(
-        debounce(() => handleSaveAsDraft()),
-        []
+        // debounce(() => handleSaveAsDraft()),
+        debounce(() => {
+            console.log("Autosave");
+        }),
+        [postTitle, postContent, postTopic, image, user]
     );
 
-    const handleSaveAsDraft = async () => {
+    const postDraft = async (data) => {
         if (postId == -1 && type === "post") {
-            // saving new post or already drafted one
-            const res = await useAxios({});
-            if (res?.status) {
-                setShowMessage({ status: "success", message: "Saved" });
-                // move to drafted area
-            } else
-                setShowMessage({ status: "error", message: "Failed Saving" });
+            // save in a new draft
+            let link = `${BASE_URL}${endpoints.createPost}`;
+            setLoading(true);
+            await fetch(link, {
+                method: "POST",
+                body: data,
+                credentials: "include",
+            })
+                .then((res) => res.json())
+                .then((res) => {
+                    window.location.href =
+                        window.location.origin + `/edit-draft/${res.id}`;
+                    setShowMessage({
+                        status: "success",
+                        message: "Draft Saved Successfully",
+                    });
+                })
+                .catch((err) => {
+                    setShowMessage({
+                        status: "error",
+                        message: err?.message,
+                    });
+                })
+                .finally(() => setLoading(false));
+        } else {
+            // update the already saved draft
+            let bodyObj;
+            if (revision)
+                // for saving revisions, their postId is the article Id
+                bodyObj = getDataInJSON(data, postId);
+            else bodyObj = getDataInJSON(data, id);
+            let link = `${BASE_URL}${endpoints.updatePost}`;
+            setLoading(true);
+            const { res, error } = await useAxios({
+                url: link,
+                method: "PUT",
+                body: JSON.stringify(bodyObj),
+            });
+            setLoading(false);
+            if (res) {
+                setShowMessage({
+                    status: "success",
+                    message: "Draft Updated Successfully",
+                });
+            }
+            if (error) {
+                setShowMessage({
+                    status: "error",
+                    message: error?.message,
+                });
+            }
+        }
+    };
+
+    const handleSaveAsDraft = () => {
+        if (postId == -1 && type === "post") {
+            // draft saving a new post
+            // save new post but with publlished_at is NULL
+            let data = getFormData(true);
+            postDraft(data);
         } else {
             // save the already drafted post
-            const res = await useAxios({});
-            if (res?.status) {
-                setShowMessage({ status: "success", message: "Saved" });
-            } else {
-                setShowMessage({ status: "error", message: "Failed Saving" });
-            }
+            // update the drafted post
+            let data = getFormData(true);
+            postDraft(data);
         }
     };
 
@@ -83,72 +143,88 @@ const EditPost = ({
             setImgSrc(URL.createObjectURL(img));
         }
     };
+
+    const fetchPreviousVersion = async () => {
+        setLoading(true);
+        const { res, error } = await useAxios({
+            url: endpoints.getRevisionDraft,
+            method: "POST",
+            body: JSON.stringify({ id: id }),
+        });
+        setLoading(false);
+        if (res) setPrevVerList(res);
+        if (error) setShowMessage({ status: "error", message: error?.message });
+    };
     const handlePreviousVer = () => {
         // fetch the data and save it in previousVersion data state
-        setPrevVerList([
-            { id: 1, date: "28th July, 12:30pm" },
-            { id: 2, date: "27th July, 10:30am" },
-            { id: 1, date: "28th July, 12:30pm" },
-            { id: 2, date: "27th July, 10:30am" },
-        ]);
+        fetchPreviousVersion();
         setPreviousVersVis(true);
     };
 
     const sendToAPI = async (data) => {
-        let link, method;
-        if (postId != -1) {
-            // editing a post
-            data.append("id", postId);
-            link = "http://localhost:3000/post/edit";
-            method = "POST";
-            await fetch(link, {
+        let link;
+        if (postId != -1 && !revision) {
+            // updating/republishing a post
+            let bodyObj = getDataInJSON(data, id);
+            link = `${BASE_URL}${endpoints.updatePost}`;
+            setLoading(true);
+            const { res, error } = await useAxios({
+                url: link,
                 method: "PUT",
+                body: JSON.stringify(bodyObj),
+            });
+            setLoading(false);
+            if (res) {
+                navigate("/dashboard");
+                setShowMessage({
+                    status: "success",
+                    message: "Successfully Updated",
+                });
+            }
+            if (error) {
+                setShowMessage({
+                    status: "error",
+                    message: error?.message,
+                });
+            }
+            return;
+        } else {
+            // submitting a new post/draft
+            link = `${BASE_URL}${endpoints.createPost}`;
+            await fetch(link, {
+                method: "POST",
                 body: data,
-                headers: { token: jwtToken },
+                credentials: "include",
             })
                 .then((res) => res.json())
                 .then((data) => {
+                    navigate("/dashboard");
                     setShowMessage({
                         status: "success",
-                        message: "Saved",
+                        message: "Post Created Successfully",
                     });
-                    navigate("/dashboard");
                 })
                 .catch((err) => {
                     setShowMessage({
                         status: "error",
-                        message: "Not able to Edit",
+                        message: err?.message,
                     });
                 })
                 .finally(() => setLoading(false));
-            return;
-        } else if (location.pathname.indexOf("edit-post") != -1) {
-            // submitting a new post
-            link = "http://localhost:3000/post/create";
-            // method = "POST";
-        } else if (location.pathname.indexOf("edit-draft") != -1) {
-            // submitting for a draft
         }
-        await fetch(link, {
-            method: "POST",
-            body: data,
-            headers: { token: jwtToken },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setShowMessage({
-                    status: "success",
-                    message: "Post Created Successfully",
-                });
-                navigate("/dashboard");
-            })
-            .catch((err) => {
-                setShowMessage({
-                    status: "error",
-                    message: err?.message,
-                });
-            })
-            .finally(() => setLoading(false));
+    };
+
+    const getFormData = (isDraft = false) => {
+        let formData = new FormData();
+        formData.append("title", postTitle);
+        formData.append("topic", postTopic);
+        if (image) formData.append("file", image);
+        formData.append("description", postContent);
+        // do not have direct access to the author name
+        formData.append("author", user.email.split("@")[0]);
+        formData.append("user_id", user.id);
+        if (!isDraft) formData.append("published_at", new Date());
+        return formData;
     };
 
     const handlePostSubmit = async () => {
@@ -165,12 +241,7 @@ const EditPost = ({
             });
             return;
         }
-        const data = new FormData();
-        data.append("title", postTitle);
-        data.append("topic", postTopic);
-        data.append("description", postContent.slice(257));
-        data.append("body", postContent);
-        data.append("image", image);
+        const data = getFormData(false);
         sendToAPI(data);
     };
 
@@ -186,7 +257,7 @@ const EditPost = ({
                         Save as Draft
                     </button>
                 ) : null}
-                {type === "draft" ? (
+                {type === "draft" && !revision ? (
                     <button
                         type="button"
                         className="border-none underline font-light"
@@ -244,7 +315,9 @@ const EditPost = ({
                         >
                             <option value="None">None</option>
                             {TOPICS.map((topic) => (
-                                <option key={topic} value={topic}>{topic}</option>
+                                <option key={topic} value={topic}>
+                                    {topic}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -263,7 +336,12 @@ const EditPost = ({
                     className="button border-none hover:bg-green-600 bg-green-700 text-gray-50 self-center my-4 py-2 px-4"
                     onClick={handlePostSubmit}
                 >
-                    <strong>Post</strong>
+                    <strong>
+                        {postId != -1 &&
+                        location.pathname.indexOf("edit-post") != -1 // location pathname like /edit-post/1, /edit-post/2
+                            ? "Update"
+                            : "Publish"}
+                    </strong>
                 </button>
             </div>
             <dialog
@@ -280,13 +358,12 @@ const EditPost = ({
                 {prevVerList.map((prevVers) => {
                     return (
                         <Link
-                            to={`/edit-draft/${prevVers.id}`}
-                            onClick={() => {
-                                setPreviousVersVis(false);
-                            }}
+                            to={`/edit-revision/${prevVers.article_id}/${prevVers.id}`}
+                            onClick={() => setPreviousVersVis(false)}
                         >
                             <p className="p-1 border-b-2 border-slate-200 hover:bg-slate-100">
-                                Saved on {prevVers.date}
+                                {prevVers.title} - Saved on{" "}
+                                {new Date(prevVers.updated_at).toLocaleString()}
                             </p>
                         </Link>
                     );

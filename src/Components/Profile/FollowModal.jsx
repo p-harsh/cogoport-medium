@@ -7,10 +7,8 @@ import { useAxios } from "../../useAxios";
 const FollowModal = ({
     modalVis,
     setModalVis,
-    name,
-    id,
-    followed_user_ids,
-    followed_by_user_ids,
+    following,
+    followed_by,
 }) => {
     const { user } = useAuth();
     const { setLoading, setShowMessage } = useLoading();
@@ -20,14 +18,16 @@ const FollowModal = ({
     useEffect(() => {
         if (modalVis === "Following") {
             // fetch the data using the followed_user_ids and username
-            fetchProfiles(followed_user_ids);
+            // setProfiles(followed_user_ids); // in case of fetching any user related data
+            setIdsDetails(following)
         } else if (modalVis === "Followed") {
             // fetch the data using the followed_by_user_ids and username
-            fetchProfiles(followed_by_user_ids);
+            // setProfiles(followed_by_user_ids); // in case of fetching any user related data
+            setIdsDetails(followed_by)
         }
     }, []);
 
-    const fetchProfiles = async (userIds) => {
+    const setProfiles = async (userIds) => {
         setLoading(true);
         const res = await useAxios({
             url: "/profiles",

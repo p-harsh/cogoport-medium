@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { endpoints } from "../../APIConfig/endpoint";
 import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
+import { SortOrder } from "../Icons/Icons";
 import PostTab from "./PostTab";
 
 const initialFilters = {
@@ -10,10 +12,11 @@ const initialFilters = {
     endDate: "",
 };
 const Posts = ({ renderFilter = true, selectedOption = null }) => {
-    const { setLoading } = useLoading();
+    const { setLoading, setShowMessage } = useLoading();
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [searchParams] = useSearchParams();
+    const [sortOrder, setSortOrder] = useState("Asc");
     let filterAuthor = searchParams.get("f-author") || "";
     let filterStartDate = searchParams.get("f-startDate") || "";
     let filterEndDate = searchParams.get("f-endDate") || "";
@@ -30,48 +33,47 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
 
     const fetchTopicPosts = useCallback(async () => {
         setLoading(true);
-        let link = "/post/search/topic";
-        const res = await useAxios({
+        let link = endpoints.getPostsByTopic;
+        const { res, error } = await useAxios({
             url: link,
             method: "POST",
             body: JSON.stringify({ topic: tag }),
         });
         setLoading(false);
-        if (res?.status) {
-            let data = res.data.posts;
-            setPosts(data);
-        } else {
-            setShowMessage({ status: "error", message: res?.message });
+        if (res) {
+            setPosts(res);
+        }
+        if (error) {
+            setShowMessage({ status: "error", message: error?.message });
         }
     }, [tag]);
 
     const fetchAllPosts = async () => {
         setLoading(true);
-        let link = "/post/latest";
-        const res = await useAxios({ url: link, method: "GET" });
+        let link = endpoints.getAllPosts;
+        const { res, error } = await useAxios({ url: link, method: "GET" });
         setLoading(false);
-        if (res?.status) {
-            let data = res?.data?.posts;
-            setPosts(data);
-        } else {
-            setShowMessage({ status: "error", message: res?.message });
+        if (res) {
+            setPosts(res);
+        }
+        if (error) {
+            setShowMessage({ status: "error", message: error?.message });
         }
     };
 
     const fetchAllPostsTitle = async () => {
         setLoading(true);
-        let link = "/post/search/title";
-        const res = await useAxios({
+        let link = endpoints.searchPosts(searchPost);
+        const { res, error } = await useAxios({
             url: link,
-            method: "POST",
-            body: JSON.stringify({ title: searchPost }),
+            method: "GET",
         });
         setLoading(false);
-        if (res?.status) {
-            let data = res.data.posts;
-            setPosts(data);
-        } else {
-            setShowMessage({ status: "error", message: res?.message });
+        if (res) {
+            setPosts(res);
+        }
+        if (error) {
+            setShowMessage({ status: "error", message: error?.message });
         }
     };
 
@@ -82,19 +84,17 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
 
     const fetchPostsByAuthor = async (filterAuthor) => {
         setLoading(true);
-        const res = await useAxios({
-            url: "/post/search/author",
-            method: "POST",
-            body: JSON.stringify({ name: filterAuthor }),
+        let link = endpoints.searchPosts(filterAuthor);
+        const { res, error } = await useAxios({
+            url: link,
+            method: "GET",
         });
         setLoading(false);
-        if (res?.status) {
-            return res?.data?.posts;
-        } else {
-            setShowMessage({
-                status: "error",
-                message: "Failed to fetch Posts from Author Name",
-            });
+        if (res) {
+            return res;
+        }
+        if (error) {
+            setShowMessage({ status: "error", message: error?.messages });
         }
     };
 
@@ -116,11 +116,11 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
             console.log(
                 removeTime(start),
                 removeTime(end),
-                new Date(post.created_at).getTime()
+                new Date(post.published_at).getTime()
             );
             return (
-                new Date(post.created_at).getTime() >= removeTime(start) &&
-                new Date(post.created_at).getTime() <= removeTime(end)
+                new Date(post.published_at).getTime() >= removeTime(start) &&
+                new Date(post.published_at).getTime() <= removeTime(end)
             );
         });
         console.log(tmpPosts);
@@ -191,13 +191,17 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
         if (sortSelect === "None") {
             fetchAllPosts();
         } else if (sortSelect === "Likes") {
-            tmpPosts = tmpPosts.sort(
-                (a, b) => a?.likes.length - b?.likes.length
+            tmpPosts = tmpPosts.sort((a, b) =>
+                sortOrder === "Asc"
+                    ? a?.post_likes - b?.post_likes
+                    : b?.post_likes - a?.post_likes
             );
             setPosts(tmpPosts);
         } else if (sortSelect === "Comments") {
-            tmpPosts = tmpPosts.sort(
-                (a, b) => a?.commenters.length - b?.commenters.length
+            tmpPosts = tmpPosts.sort((a, b) =>
+                sortOrder === "Asc"
+                    ? a?.post_comments - b?.post_comments
+                    : b?.post_comments - a?.post_comments
             );
             setPosts(tmpPosts);
         }
@@ -258,6 +262,22 @@ const Posts = ({ renderFilter = true, selectedOption = null }) => {
                             </select>
                             <button type="button" onClick={handleSorting}>
                                 Sort
+                            </button>
+                            <button
+                                className="p-1 mx-1"
+                                onClick={() =>
+                                    setSortOrder((prev) =>
+                                        prev === "Asc" ? "Desc" : "Asc"
+                                    )
+                                }
+                            >
+                                <SortOrder
+                                    className={`w-[20px] h-[20px] ${
+                                        sortOrder === "Asc"
+                                            ? "rotate-180"
+                                            : "rotate-0"
+                                    }`}
+                                />
                             </button>
                         </div>
                     </>

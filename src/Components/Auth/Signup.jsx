@@ -2,9 +2,10 @@ import { Formik } from "formik";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
+import { endpoints } from "../../APIConfig/endpoint";
+import { useAuth } from "../../Context/AuthContext";
 import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
-import { checkAuth } from "../../utils";
 import "./auth.css";
 
 const SignUpSchema = yup.object().shape({
@@ -22,37 +23,56 @@ const SignUpSchema = yup.object().shape({
 });
 
 const SignUp = () => {
-    const { loading, setLoading, showMessage, setShowMessage } = useLoading();
     const navigate = useNavigate();
-    useEffect(() => {
-        if (checkAuth()) {
-            navigate("/dashboard");
+    const { loading, setLoading, showMessage, setShowMessage } = useLoading();
+
+    const { setUser } = useAuth();
+
+    const createProfile = async (values) => {
+        setLoading(true);
+        const { res, error } = await useAxios({
+            url: endpoints.createProfile,
+            method: "POST",
+            body: JSON.stringify({ bio: values.username, name: values.name }),
+        });
+        if (error) {
+            setShowMessage({
+                status: "error",
+                message: "Not able to create profile",
+            });
         }
-    }, []);
+        setLoading(false);
+    };
+
     const handleSubmit = (values) => {
         async function sendSignupData(values) {
             setLoading(true);
-            const res = await useAxios({
-                url: "/signup",
+            const { res, error } = await useAxios({
+                url: endpoints.signup,
                 method: "POST",
-                body: JSON.stringify(values),
-                headers: JSON.stringify({
-                    "Access-Control-Allow-Origin": "*",
-                }),
+                body: JSON.stringify({ user: values }),
             });
             setLoading(false);
-            if (res?.status) {
+            if (
+                res?.status?.code >= 200 && // res is here different depending on received from server
+                res?.status?.code < 300 &&
+                res?.data?.id
+            ) {
+                await createProfile(values);
+                // send to dashboard as cookie also sent along with
                 setShowMessage({
                     status: "success",
-                    message: "Signed Up SuccesFully, \n Please Login!!",
+                    message: res?.status?.code + "\n" + res?.status?.message,
                 });
-                navigate("/login");
+                localStorage.setItem("user", JSON.stringify(res?.data));
+                setUser(res?.data);
+                navigate("/dashboard");
             } else {
+                // for error
                 setShowMessage({
                     status: "error",
-                    message: res?.message,
+                    message: res?.status?.code + "\n" + res?.status?.message,
                 });
-                console.log("ERROR", res?.message);
             }
         }
         sendSignupData(values);

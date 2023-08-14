@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 import PostTab from "./PostTab";
+import { endpoints } from "../../APIConfig/endpoint";
 
 export const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -12,20 +13,23 @@ const SpecialPosts = ({ type }) => {
     const [posts, setPosts] = useState([]);
     const fetchTopPosts = async () => {
         setLoading(true);
-        const res = await useAxios({ url: "/posts/top" });
+        const { res, error } = await useAxios({ url: endpoints.topPosts });
         setLoading(false);
-        if (res?.status) {
-            setPosts(res?.data?.posts);
-        } else {
+        if (res) {
+            setPosts(res);
+        }
+        if (error) {
             setShowMessage({
                 status: "error",
-                message: res?.message + "- Not able to fetch Top Posts",
+                message: error?.message,
             });
         }
     };
-    const fetchRecommendedPosts = async() => {
+    const fetchRecommendedPosts = async () => {
         setLoading(true);
-        const res = await useAxios({ url: "/post/recommended", method: "POST" });
+        const res = await useAxios({
+            url: endpoints.recommendedPosts,
+        });
         setLoading(false);
         if (res?.status) {
             setPosts(res?.data?.posts);
@@ -35,7 +39,7 @@ const SpecialPosts = ({ type }) => {
                 message: res?.message + "- Not able to fetch Recommended Posts",
             });
         }
-    }
+    };
     useEffect(() => {
         //
         if (type === "top-posts") {
@@ -43,7 +47,7 @@ const SpecialPosts = ({ type }) => {
             fetchTopPosts();
         } else if (type === "recommended-posts") {
             // fetch the data
-            fetchRecommendedPosts()
+            fetchRecommendedPosts();
         } else if (type === "similar-posts") {
             // fetch the data
             fetchRecommendedPosts();
@@ -57,7 +61,7 @@ const SpecialPosts = ({ type }) => {
                     ?.map((e) => capitalizeFirstLetter(e))
                     ?.join(" ")}
             </div>
-            <div className="m-4">
+            <div className="m-4 w-[90%] md:w-[70%] sm-[80%] mx-auto">
                 {posts.map((post) => (
                     <PostTab key={post.id} {...post} />
                 ))}

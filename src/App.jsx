@@ -12,6 +12,7 @@ import Dashboard from "./Components/Dashboard";
 import Drafts from "./Components/Drafts";
 import EditPost from "./Components/EditPost";
 import EditDraft from "./Components/EditPost/EditDraft";
+import EditRevision from "./Components/EditPost/EditRevision";
 import List from "./Components/List";
 import Navbar from "./Components/Navbar";
 import PostDetail from "./Components/PostDetail";
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
                     { path: "/list/:id", element: <List /> },
                     { path: "/edit-post/:postId", element: <EditPost /> },
                     { path: "/edit-draft/:id", element: <EditDraft /> },
+                    {
+                        path: "/edit-revision/:postId/:id",
+                        element: <EditRevision />,
+                    },
                     {
                         path: "/similar-posts",
                         element: <SpecialPosts type="similar-posts" />,

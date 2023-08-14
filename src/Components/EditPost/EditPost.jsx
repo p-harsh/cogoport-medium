@@ -4,6 +4,7 @@ import { useAuth } from "../../Context/AuthContext";
 import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 import Edit from "./Edit";
+import { endpoints } from "../../APIConfig/endpoint";
 
 const EditPost = () => {
     const { setLoading, setShowMessage } = useLoading();
@@ -12,18 +13,19 @@ const EditPost = () => {
 
     const fetchPostData = async () => {
         setLoading(true);
-        const res = await useAxios({
-            url: "/post/id",
+        const {res, error} = await useAxios({
+            url: endpoints.getPost,
             method: "POST",
             body: JSON.stringify({ id: postId }),
         });
         setLoading(false);
-        if (res?.status) {
-            setPostData(res?.data?.post);
-        } else {
+        if (res) {
+            setPostData(res);
+        } 
+        if(error) {
             setShowMessage({
                 status: "error",
-                message: "Not able to fetch post data",
+                message: error?.message,
             });
         }
     };

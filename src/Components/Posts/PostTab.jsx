@@ -5,14 +5,17 @@ import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 import { getWordsCount } from "../EditPost/Edit.helper";
 import { BookmarkSVG, DeleteSVG, EditSVG } from "../Icons/Icons";
+import { endpoints } from "../../APIConfig/endpoint";
 
 const PostTab = (props) => {
-    const { user, jwtToken } = useAuth();
+    const { user } = useAuth();
     const { setShowMessage, setLoading } = useLoading();
     const navigate = useNavigate();
     const {
+        // "file"
+        author = "",
+        published_at = "",
         title = "",
-        body = "",
         user_id,
         description = "",
         created_at = "",
@@ -23,33 +26,19 @@ const PostTab = (props) => {
         commenters = [],
         id,
         image_url = null,
-        topic= "None"
+        topic = "None",
+        minutes_to_read = 0,
+        post_comments = 0,
+        post_likes = 0,
     } = props;
 
-    const [author, setAuthor] = useState({});
-    const [saveLaterVisible, setSaveLaterVisible] = useState(false);
+    // const [author, setAuthor] = useState({});
+    const [listsContainVisible, setListsContainVisible] = useState(false);
     const [listArr, setListArr] = useState([]);
     const [newListVal, setNewListVal] = useState("");
 
-    const fetchAuthor = async (user_id) => {
-        const res = await useAxios({
-            url: "/profile",
-            method: "POST",
-            body: JSON.stringify({ id: user_id }),
-        });
-        console.log(res);
-        if (res?.status) {
-            setAuthor(res?.data);
-        } else {
-            setShowMessage({
-                status: "error",
-                message: "Failed to fetch Author data",
-            });
-        }
-    };
-
     useEffect(() => {
-        fetchAuthor(user_id);
+        // fetchAuthor(user_id);
     }, []);
 
     const handleEditPost = () => {
@@ -59,53 +48,58 @@ const PostTab = (props) => {
 
     const handleDeletePost = async () => {
         setLoading(true);
-        const res = await useAxios({
-            url: "/post/delete",
+        const { res, error } = await useAxios({
+            url: endpoints.deletePost,
             method: "DELETE",
             body: JSON.stringify({ id }),
         });
         setLoading(false);
-        if (res?.status) {
+        if (res) {
             navigate(0);
-        } else {
+        }
+        if (error) {
             setShowMessage({
                 status: "error",
-                message: "Failed to Delete Post",
+                message: error?.message,
             });
         }
         // send the request and refresh the page
         // reload the page after that
     };
-    const handleSaveLater = () => {
-        if (saveLaterVisible === false) {
+    const fetchAllLists = async () => {
+        const { res, error } = await useAxios({ url: endpoints.getAllLists });
+        if (res) setListArr(res);
+        if (error) setShowMessage({ status: "error", message: error?.message });
+    };
+    const handleLists = () => {
+        if (listsContainVisible === false) {
             // currently not visible
             // fetch from database all the lists created by the user
-            setListArr([
-                { name: "List 1", id: 1 },
-                { name: "List 2", id: 2 },
-            ]);
+            fetchAllLists();
         }
-        setSaveLaterVisible((prev) => !prev);
+        setListsContainVisible((prev) => !prev);
     };
 
     const addToTheList = async (listName) => {
         setLoading(true);
-        const res = await useAxios({
-            url: "/list/add",
+        const { res, error } = await useAxios({
+            url: endpoints.addList,
             method: "POST",
-            body: JSON.stringify({ name: listName, id }),
+            body: JSON.stringify({ playlist: { title: listName } }),
         });
-        if (res?.status) {
-            setListArr((prev) => [...prev, res?.data]);
+        setLoading(false);
+        if (res) {
+            setListArr((prev) => [...prev, res]);
             setNewListVal("");
             setShowMessage({
                 status: "Success",
                 message: "List Added Succesfully",
             });
-        } else {
+        }
+        if (error) {
             setShowMessage({
                 status: "error",
-                message: "Failed to add the New List",
+                message: error?.message,
             });
         }
     };
@@ -113,10 +107,11 @@ const PostTab = (props) => {
     const handleAddToList = async () => {
         if (newListVal !== "") {
             // check if another list with same name exists
-            if (listArr.find((list) => list.name === newListVal)) {
+            if (listArr.find((list) => list.title === newListVal)) {
+                // can also check for save for later named list
                 setShowMessage({
                     status: "error",
-                    message: "Can't add same name list",
+                    message: "Can't add list with same name",
                 });
                 return;
             }
@@ -129,22 +124,22 @@ const PostTab = (props) => {
 
     const addPostToList = async (listId) => {
         setLoading(true);
-        const res = await useAxios({
-            url: "/list/post/add",
+        const {res,error} = await useAxios({
+            url: endpoints.addPostToList,
             method: "POST",
-            body: JSON.stringify({ id, listId }),
+            body: JSON.stringify({ article_id: id, playlist_id: listId }),
         });
-        if (res?.status) {
-
-            setNewListVal("");
+        setLoading(false);
+        if (res) {
             setShowMessage({
                 status: "Success",
-                message: "Post Added Succesfully",
+                message: res?.message,
             });
-        } else {
+        }
+        if (error) {
             setShowMessage({
                 status: "error",
-                message: "Failed to add Post to List",
+                message: error?.message,
             });
         }
     };
@@ -153,15 +148,16 @@ const PostTab = (props) => {
         // send the post id and list id to get saved
         await addPostToList(listId);
         // in case of correct saving
-        setSaveLaterVisible(false);
+        setListsContainVisible(false);
     };
 
     return (
         <div className="flex flex-col items-start p-4 border-2 rounded-lg my-4">
             <div className="flex justify-between w-full text-base font-light">
-                <div className="author mx-1">{author.name}</div>
+                <div className="author mx-1">{author}</div>
                 <div className="date mx-1 border-l-2 pl-2">
-                    {created_at && created_at.split("T")[0]}
+                    {published_at &&
+                        new Date(published_at).toLocaleDateString()}
                 </div>
                 <div className="date mx-1 font-medium border-l-2 border-slate-200 pl-2">
                     {topic}
@@ -201,7 +197,7 @@ const PostTab = (props) => {
             <div className="flex w-full max-h-24 overflow-hidden text-ellipsis">
                 <div className="w-full sm:w-9/12">
                     <div className="font-semibold text-lg">{title}</div>
-                    <p className="text-ellipsis">{body}</p>
+                    <p className="text-ellipsis">{description}</p>
                 </div>
                 <div className="w-3/12 m-2 max-h-24 justify-center  rounded-lg overflow-hidden shadow-sm hidden sm:flex">
                     <img src={image_url} />
@@ -209,11 +205,11 @@ const PostTab = (props) => {
             </div>
             <div className="w-full flex justify-end items-center mt-2">
                 <div className="px-1 relative">
-                    {user && jwtToken ? (
+                    {user ? (
                         <button
                             type="button"
                             className="underline border-2 border-slate-200 p-1"
-                            onClick={handleSaveLater}
+                            onClick={() => handleLists()}
                             title="Save to List"
                         >
                             <span>
@@ -223,22 +219,22 @@ const PostTab = (props) => {
                     ) : null}
                     <div
                         className={`absolute z-10 top-[48px] left-2 bg-white border-2 border-stone-200 rounded-md ${
-                            saveLaterVisible ? "block" : "hidden"
+                            listsContainVisible ? "block" : "hidden"
                         }`}
                     >
-                        {/* <p
+                        <p
                             className="p-1 px-2 border-b-2 cursor-pointer hover:bg-slate-100"
                             onClick={() => handleAddPostToList(-1)}
                         >
                             Save for Later
-                        </p> */}
+                        </p>
                         {listArr.map((list) => (
                             <p
                                 key={list.id}
                                 className="p-1 px-2 border-b-2 cursor-pointer hover:bg-slate-100"
                                 onClick={() => handleAddPostToList(list.id)}
                             >
-                                {list.name}
+                                {list.title}
                             </p>
                         ))}
                         <p className="p-1 px-2 border-b-2 flex flex-col justify-end">
@@ -269,11 +265,13 @@ const PostTab = (props) => {
             <div className="flex justify-between w-full mb-2 flex-wrap text-base font-light">
                 <p>
                     Views : <strong>{views}</strong> | Likes :{" "}
-                    <strong>{likes?.length}</strong> | Comments :{" "}
-                    <strong>{commenters?.length}</strong>
+                    <strong>{post_likes}</strong> | Comments :{" "}
+                    <strong>{post_comments}</strong>
                 </p>
                 <p className="">
-                    {Math.round(getWordsCount(body) / 265)} minute read
+                    {/* {Math.round(getWordsCount(description) / 265)}  */}
+                    {minutes_to_read} minute{minutes_to_read > 1 ? "s" : ""}{" "}
+                    read
                 </p>
             </div>
         </div>

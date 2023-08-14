@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
+import { useAxios } from "../../useAxios";
+import { endpoints } from "../../APIConfig/endpoint";
 
 const ProtectedRoute = () => {
-    const { user, jwtToken, setUser, setJwtToken } = useAuth();
-    let lCUser = localStorage.getItem("user");
-    let lCToken = localStorage.getItem("jwtToken");
+    const { user, setUser } = useAuth();
+    const { setLoading } = useLoading();
     const navigate = useNavigate();
     /**
     //  * State to save user details, status
@@ -15,24 +17,30 @@ const ProtectedRoute = () => {
      *
      * Check if user exists
      */
+
+    const checkUser = async () => {
+        setLoading(true);
+        const { res, error } = await useAxios({ url: endpoints.currentUser});
+        setLoading(false);
+        if (res?.status) {
+            // error
+            setShowMessage({
+                status: "error",
+                message: "Please Login!!",
+            });
+            navigate("/login");
+        } else {
+            // correct data
+            setUser(res);
+            localStorage.setItem("user", JSON.stringify(res));
+        }
+    };
+
     useEffect(() => {
-        if (!lCToken || !lCUser) navigate("/login");
+        checkUser();
     }, []);
 
-    // if (jwtToken !== lCToken) {
-    //     setJwtToken(JSON.parse(lCToken));
-    // }
-    // if (user?.id !== JSON.parse(lCUser)?.id) {
-    //     setUser(JSON.parse(lCUser)?.id);
-    // }
-
-    /**
-     * If user exists, return whatever you want
-     * Else, take user to login back
-     */
-    // if (user && jwtToken && lCUser && lCTOken) return <Outlet />;
-    // else navigate("/login");
-    if (user && jwtToken) return <Outlet />;
+    return <Outlet />;
 };
 
 export default ProtectedRoute;

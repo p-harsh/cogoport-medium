@@ -2,6 +2,7 @@ import { Formik } from "formik";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
+import { endpoints } from "../../APIConfig/endpoint";
 import { useAuth } from "../../Context/AuthContext";
 import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
@@ -15,15 +16,9 @@ const SignInSchema = yup.object().shape({
 });
 
 const SignIn = () => {
-    const { user, setUser, jwtToken, setJwtToken } = useAuth();
+    const { user, setUser } = useAuth();
     const { setLoading, setShowMessage } = useLoading();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        if (user && jwtToken) {
-            navigate(-1);
-        }
-    }, []);
 
     return (
         <div className="login flex flex-col justify-center">
@@ -33,29 +28,35 @@ const SignIn = () => {
                 onSubmit={async (values, { setSubmitting }) => {
                     // Add submit logic here
                     setLoading(true);
-                    const res = await useAxios({
-                        url: "/signin",
+                    const { res, error } = await useAxios({
+                        url: endpoints.login,
                         method: "POST",
-                        body: JSON.stringify(values),
+                        body: JSON.stringify({ user: values }),
                     });
                     setLoading(false);
-                    if (res?.status) {
+                    if (
+                        res?.status?.code >= 200 &&
+                        res?.status?.code < 300 &&
+                        res?.data?.id
+                    ) {
                         setShowMessage({
                             status: "success",
-                            message: "Succesfull Logged In!!",
+                            message:
+                                res?.status?.code + "\n" + res?.status?.message,
                         });
+                        localStorage.setItem("user", JSON.stringify(res?.data));
+                        setUser(res?.data);
                         navigate("/dashboard");
-                        setUser(JSON.parse(localStorage.getItem("user")));
-                        setJwtToken(
-                            JSON.parse(localStorage.getItem("jwtToken"))
-                        );
                     } else {
-                        console.log(res);
                         // for error
+                        let message;
+                        if (error?.message) message = error?.message;
+                        else message = "Not able to login";
                         setShowMessage({
                             status: "error",
                             message:
-                                res?.message + "\n" + res?.response?.statusText,
+                                // res?.status?.code + "\n" + res?.status?.message, // use this when error handling is fixed from server
+                                message,
                         });
                     }
                 }}

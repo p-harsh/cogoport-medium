@@ -6,9 +6,11 @@ import { useAxios } from "../../useAxios";
 import PostTab from "../Posts/PostTab";
 import FollowModal from "./FollowModal";
 import ListTab from "./ListTab";
+import { isCurrentUser } from "./Profile.helper";
+import { endpoints } from "../../APIConfig/endpoint";
 
 const Profile = (props) => {
-    const { user, jwtToken } = useAuth();
+    const { user } = useAuth();
     const { setLoading, setShowMessage } = useLoading();
     const { id } = useParams();
     const navigate = useNavigate();
@@ -16,30 +18,47 @@ const Profile = (props) => {
     const [myPosts, setMyPosts] = useState([]);
     const [selectedOption, setSelectedOption] = useState("Home");
     const [myLists, setMyLists] = useState([]);
+    const [connectionData, setConnectionData] = useState({
+        following: [],
+        followed_by: [],
+    });
     const [modalVis, setModalVis] = useState(null);
 
     const fetchDetails = useCallback(async () => {
         setLoading(true);
-        let link = "/profile";
+        let link = endpoints.getProfile(id);
+        const { res, error } = await useAxios({
+            url: link,
+        });
+        setLoading(false);
+        if (res) {
+            let { profile, articles, following, followed_by } = res;
+            articles = articles.filter(
+                (a) => a.user_id == id && a.published_at != null
+            ); // filter as per data coming from server
+            setMyPosts(articles);
+            setDetails(profile);
+            setConnectionData((prev) => {
+                let tmpObj = { ...prev };
+                tmpObj["followed_by"] = followed_by;
+                tmpObj["following"] = following;
+                return tmpObj;
+            });
+        }
+        if (error) {
+            // for error
+            setShowMessage({ status: "error", message: error?.message });
+        }
+    }, [id, selectedOption]);
+
+    const fetchAuthorPosts = async () => {
+        setLoading(true);
+        let link = "post/search/user_id";
         const res = await useAxios({
             url: link,
             method: "POST",
             body: JSON.stringify({ id }),
         });
-        setLoading(false);
-        if (res?.status) {
-            let data = res.data;
-            setDetails(data);
-        } else {
-            // for error
-            setShowMessage({ status: "error", message: res?.message });
-        }
-    }, [id]);
-
-    const fetchAuthorPosts = async () => {
-        setLoading(true);
-        let link = "post/search/user_id";
-        const res = await useAxios({ url: link, method: "POST", body: JSON.stringify({id})});
         setLoading(false);
         if (res?.status) {
             let data = res?.data?.posts;
@@ -49,23 +68,22 @@ const Profile = (props) => {
         }
     };
 
-    const fetchMyLists = async () => {
-        setLoading(true);
-
-        let link = "";
-        const res = await useAxios({ url: link, method: "GET" });
-        setLoading(false);
-        if (res?.status) {
-            let data = res.data;
-            setMyLists(data);
-        } else {
-            setShowMessage({ status: "error", message: res?.message });
+    const fetchMyLists = useCallback(async () => {
+        if (selectedOption.toLowerCase() === "list") {
+            setLoading(true);
+            let link = endpoints.getAllLists;
+            const { res, error } = await useAxios({ url: link });
+            setLoading(false);
+            if (res) setMyLists(res);
+            if (error)
+                setShowMessage({ status: "error", message: error?.message });
         }
-    };
+    }, [selectedOption]);
 
     useEffect(() => {
         if (isNaN(parseInt(id, 10))) {
-            if (!user || !jwtToken) {
+            // to check if id is valid
+            if (!user) {
                 navigate("/login");
                 return;
             } else {
@@ -75,30 +93,26 @@ const Profile = (props) => {
         fetchDetails();
         // fetch and set the my posts based on authorId
         if (selectedOption === "Home") {
-            fetchAuthorPosts();
+            // fetchAuthorPosts();
         }
         if (selectedOption === "List") {
-            // fetchMyLists()
+            fetchMyLists();
         }
-        // fetch and set the lists created
-        setMyLists([
-            { name: "List 1", id: 1 },
-            { name: "List 2", id: 2 },
-        ]);
     }, [selectedOption, id]);
 
     const handleFollow = async (link) => {
-        if (details.id !== user.id) {
+        if (details.user_id !== user.id) {
             setLoading(true);
-            const res = await useAxios({
-                url: `/${link.toLowerCase()}`,
-                method: "POST",
-                body: JSON.stringify({ id: details.id }),
+            const { res, error } = await useAxios({
+                url: `/profiles/${details.user_id}/${link.toLowerCase()}`,
+                method: link === "Follow" ? "POST" : "DELETE",
+                body: JSON.stringify({ id: details.user_id }),
             });
             setLoading(false);
-            if (res?.status) {
+            if (res) {
                 fetchDetails();
-            } else {
+            }
+            if (error) {
                 setShowMessage({
                     status: "error",
                     message: res?.message + "-" + res?.response?.statustext,
@@ -108,17 +122,17 @@ const Profile = (props) => {
     };
     return (
         <>
-            <div className="flex flex-col m-8">
+            <div className="flex flex-col my-8 w-[90%] mx-auto am:w-[80%] md:w-[70%]">
                 {!!modalVis ? (
                     <FollowModal
                         modalVis={modalVis}
                         setModalVis={setModalVis}
-                        {...details}
+                        {...connectionData}
                     />
                 ) : null}
                 <div className="text-xl text-center">
                     <p className="text-3xl font-semibold">{details.name}</p>
-                    <p className="font-light">{details.email}</p>
+                    <p className="font-light">{details.bio}</p>
                 </div>
                 <div
                     className="flex justify-between
@@ -132,8 +146,8 @@ const Profile = (props) => {
                             Following
                             <strong>
                                 {" "}
-                                {details?.followed_user_ids
-                                    ? details?.followed_user_ids.length
+                                {connectionData?.following
+                                    ? connectionData?.following.length
                                     : 0}
                             </strong>
                         </button>
@@ -145,22 +159,22 @@ const Profile = (props) => {
                             Followed
                             <strong>
                                 {" "}
-                                {details?.followed_by_user_ids
-                                    ? details?.followed_by_user_ids.length
+                                {connectionData?.followed_by
+                                    ? connectionData?.followed_by.length
                                     : 0}
                             </strong>
                         </button>
                     </div>
-                    {user && jwtToken ? (
+                    {user ? (
                         user?.id &&
-                        details?.id &&
-                        user?.id == details?.id ? null : (
+                        details?.user_id &&
+                        user?.id == details?.user_id ? null : ( // current user's profile do not show any button
                             // check if it is not author and not following then show
                             <>
-                                {details?.followed_by_user_ids &&
-                                details?.followed_by_user_ids.indexOf(
-                                    parseInt(user?.id, 10)
-                                ) !== -1 ? (
+                                {isCurrentUser(
+                                    connectionData?.followed_by,
+                                    user.id
+                                ) ? (
                                     <button
                                         type="button"
                                         className="bg-slate-200 text-black self-end"
@@ -192,8 +206,8 @@ const Profile = (props) => {
                     >
                         Home
                     </button>
-                    {user && jwtToken ? (
-                        user.id == details.id ? (
+                    {user ? (
+                        user.id == details.user_id ? (
                             <button
                                 type="button"
                                 className={`mx-2 border-none ${
@@ -221,8 +235,8 @@ const Profile = (props) => {
                             })}
                         </div>
                         <div>
-                            {user && jwtToken ? (
-                                user.id == details.id ? (
+                            {user ? (
+                                user.id == details.user_id ? (
                                     <button
                                         onClick={() => navigate("/drafts")}
                                         type="button"
@@ -237,7 +251,7 @@ const Profile = (props) => {
                 ) : (
                     <>
                         <div className="flex flex-col">
-                            <ListTab name="Save for Later" id="-1" />
+                            <ListTab title="SAVE FOR LATER" id="-1" />
                             {myLists.map((list) => (
                                 <ListTab key={list.id} {...list} />
                             ))}
@@ -247,11 +261,6 @@ const Profile = (props) => {
             </div>
         </>
     );
-    // username
-
-    // email
-    // My Posts
-    // Saved Posts button
 };
 
 export default Profile;

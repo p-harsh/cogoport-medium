@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { endpoints } from "../../APIConfig/endpoint";
+import { useLoading } from "../../Context/LoadingContext";
+import { useAxios } from "../../useAxios";
 import PostTab from "../Posts/PostTab";
 import { handleListShare } from "./List.helper";
 
@@ -7,31 +10,27 @@ const List = () => {
     const { id } = useParams();
     const [isCopied, setIsCopied] = useState(false);
     const [listPosts, setListPosts] = useState([]);
+    const { setLoading, setShowMessage } = useLoading();
+
+    const fetchListPosts = async () => {
+        if (id == -1) {
+            // fpr watch later
+        } else {
+            setLoading(true);
+            const { res, error } = await useAxios({
+                url: endpoints.getListPosts(id),
+            });
+            setLoading(false);
+            if (res) setListPosts(res);
+            if (error)
+                setShowMessage({ status: "error", message: error?.message });
+        }
+    };
 
     useEffect(() => {
         // fetch based on the list id and author
         // fetch from save for later if -1
-        setListPosts([
-            {
-                id: 1,
-                title: "z",
-                topic: [],
-                image: "",
-                content:
-                    "This is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
-                date: "17th July, 2023",
-                author: "blah",
-            },
-            {
-                id: 2,
-                title: "z",
-                topic: [],
-                image: "",
-                content: "This is the content",
-                date: "29th July, 2023",
-                author: "blah",
-            },
-        ]);
+        fetchListPosts();
     }, [id]);
 
     return (
@@ -41,9 +40,7 @@ const List = () => {
                     Saved For Later
                 </p>
             ) : (
-                <p className="text-center font-medium text-xl">
-                    List 2
-                </p>
+                <p className="text-center font-medium text-xl">List 2</p>
             )}
 
             <div className="self-end ">

@@ -1,111 +1,114 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { endpoints } from "../../APIConfig/endpoint";
 import { useAuth } from "../../Context/AuthContext";
+import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 const Drafts = () => {
-    const { user, jwtToken, setUser, setJwtToken } = useAuth();
+    const { user, setUser } = useAuth();
     const navigate = useNavigate();
-    const autherId = user.id;
+    const { setLoading, setShowMessage } = useLoading();
     const [draftData, setDraftData] = useState([]);
 
     const handleFetchDrafts = async () => {
         // submit to the data and fetch the comments data again
         setLoading(true);
-        const res = await useAxios({
-            url: "/drafts",
-            method: "POST",
-            body: JSON.stringify({ id: id }),
+        let { res, error } = await useAxios({
+            url: endpoints.getAllDrafts
         });
         setLoading(false);
-        if (res?.status) {
-            setDraftData(res?.data?.posts);
-        } else {
+        if (res) {
+            res = res.filter((draft) => draft.user_id == user.id);
+            setDraftData(res);
+        }
+        if (error)
             setShowMessage({
                 status: "error",
-                message: "Failed to Fetch Drafts",
+                message: error?.message,
             });
-        }
     };
 
     useEffect(() => {
         // fetch all the draft data
-        // handleFetchDrafts()
-        setDraftData([
-            {
-                id: 4,
-                title: "z",
-                topic: "",
-                image: "",
-                content:
-                    "This is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
-                author: "blah",
-                date: "23rd July, 2023, 12:30 pm",
-            },
-            {
-                id: 5,
-                title: "z",
-                topic: "",
-                image: "",
-                content: "This is the content",
-                author: "blah",
-                date: "25th July, 2023, 12:30 pm",
-            },
-            {
-                id: 6,
-                title: "z",
-                topic: "",
-                image: "",
-                content: "This is the content",
-                author: "blah",
-                date: "29th July, 2023, 12:30 pm",
-            },
-            {
-                id: 5,
-                title: "z",
-                topic: "",
-                image: "",
-                content: "This is the content",
-                author: "blah",
-                date: "25th July, 2023, 12:30 pm",
-            },
-            {
-                id: 6,
-                title: "z",
-                topic: "",
-                image: "",
-                content: "This is the content",
-                author: "blah",
-                date: "29th July, 2023, 12:30 pm",
-            },
-        ]);
-    }, []);
+        handleFetchDrafts();
+        // setDraftData([
+        //     {
+        //         id: 4,
+        //         title: "z",
+        //         topic: "",
+        //         image: "",
+        //         content:
+        //             "This is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the contentThis is the content",
+        //         author: "blah",
+        //         date: "23rd July, 2023, 12:30 pm",
+        //     },
+        //     {
+        //         id: 5,
+        //         title: "z",
+        //         topic: "",
+        //         image: "",
+        //         content: "This is the content",
+        //         author: "blah",
+        //         date: "25th July, 2023, 12:30 pm",
+        //     },
+        //     {
+        //         id: 6,
+        //         title: "z",
+        //         topic: "",
+        //         image: "",
+        //         content: "This is the content",
+        //         author: "blah",
+        //         date: "29th July, 2023, 12:30 pm",
+        //     },
+        //     {
+        //         id: 5,
+        //         title: "z",
+        //         topic: "",
+        //         image: "",
+        //         content: "This is the content",
+        //         author: "blah",
+        //         date: "25th July, 2023, 12:30 pm",
+        //     },
+        //     {
+        //         id: 6,
+        //         title: "z",
+        //         topic: "",
+        //         image: "",
+        //         content: "This is the content",
+        //         author: "blah",
+        //         date: "29th July, 2023, 12:30 pm",
+        //     },
+        // ]);
+    }, [user]);
 
     return (
         <>
             <p className="font-semibold text-xl text-center mt-8 mb-4">
                 Saved As Drafts
             </p>
-            <div className="flex flex-wrap gap-8 w-[90%] sm:w-[80%] md:w-[70%] mx-auto">
+            <div className="flex flex-wrap gap-8 w-[90%] sm:w-[80%] md:w-[70%] mx-auto justify-center">
                 {draftData.map((draft) => {
                     return (
-                        <>
-                            <div
-                                className="cursor-pointer shadow-xl p-4 rounded-lg hover:bg-slate-100"
-                                onClick={() =>
-                                    navigate(`/edit-draft/${draft.id}`)
-                                }
-                            >
-                                <div className="h-[200px] w-[150px] overflow-hidden">
-                                    <strong>{draft.title}</strong>
-                                    <div>{draft?.content}</div>
-                                </div>
-                                <div className="text-sm font-light">
-                                    {draft?.date}
-                                </div>
+                        <div
+                            key={draft.key}
+                            className="cursor-pointer shadow-xl p-4 rounded-lg hover:bg-slate-100"
+                            onClick={() => navigate(`/edit-draft/${draft.id}`)}
+                        >
+                            <div className="h-[200px] w-[150px] overflow-hidden">
+                                <strong>{draft.title}</strong>
+                                <div>{draft?.description}</div>
                             </div>
-                        </>
+                            <div className="text-sm font-light border-t-2 text-center py-1">
+                                {new Date(draft?.updated_at).toLocaleString()}
+                            </div>
+                        </div>
                     );
                 })}
+                {draftData.length === 0 ? (
+                    <p className="text-xl font-semibold text-center m-4">
+                        No Drafts Available
+                    </p>
+                ) : null}
             </div>
         </>
     );

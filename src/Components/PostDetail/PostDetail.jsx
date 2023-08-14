@@ -6,6 +6,7 @@ import { useLoading } from "../../Context/LoadingContext";
 import { useAxios } from "../../useAxios";
 import { FavoriteIcon } from "../Icons/Icons";
 import getStripe from "../Stripe/getStripe";
+import { endpoints } from "../../APIConfig/endpoint";
 import CommentTab from "./CommentTab";
 import {
     isUserPlanAllowed,
@@ -16,7 +17,7 @@ import {
 const PostDetail = () => {
     const modalRef = useRef(null);
     const { setLoading, setShowMessage } = useLoading();
-    const { user, jwtToken } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
     const [postDetail, setPostDetail] = useState({});
@@ -30,16 +31,17 @@ const PostDetail = () => {
 
     const fetchPostDetails = async () => {
         setLoading(true);
-        let link = "/post/id";
-        const res = await useAxios({
+        let link = endpoints.getPost;
+        const { res, error } = await useAxios({
             url: link,
             method: "POST",
-            body: JSON.stringify({ id: id, viewing: true }),
+            body: JSON.stringify({ id: id }),
         });
         setLoading(false);
-        if (res?.status) {
-            setPostDetail(res?.data?.post);
-        } else {
+        if (res) {
+            setPostDetail(res);
+        }
+        if (error) {
             setShowMessage({
                 status: "error",
                 message: "Failed to Get Post Details",
@@ -48,6 +50,8 @@ const PostDetail = () => {
     };
 
     useEffect(() => {
+        
+
         // fetch the data of post
         // look at number of posts read today
         let postsReadList = postsReadDbInit();
@@ -59,6 +63,8 @@ const PostDetail = () => {
         }
 
         postsReadList = updateReadList(postsReadList);
+
+        
         fetchPostDetails();
         // fetch post details based on Id
     }, [id]);
@@ -66,21 +72,7 @@ const PostDetail = () => {
     const handleCommentPost = async (e) => {
         // submit to the data and fetch the comments data again
         if (writtenCommentValue !== "") {
-            setLoading(true);
-            const res = await useAxios({
-                url: "/post/comment",
-                method: "POST",
-                body: JSON.stringify({ id: id, comment: writtenCommentValue }),
-            });
-            setLoading(false);
-            if (res?.status) {
-                fetchPostDetails();
-            } else {
-                setShowMessage({
-                    status: "error",
-                    message: "Failed to Comments",
-                });
-            }
+            return;
         }
         setWrittenCommentValue("");
     };
@@ -88,8 +80,9 @@ const PostDetail = () => {
     const handlePostLike = async () => {
         // send the data for like
         // fetch the data again
-        if (postDetail?.likes.find((e) => e == user.id)) {
-            // go to unlike
+        if (postDetail?.likes?.find((e) => e == user?.id)) {
+            // go to unlike if API available remove return
+            return;
             const res = await useAxios({
                 url: "/post/unlike",
                 method: "POST",
@@ -105,25 +98,26 @@ const PostDetail = () => {
             }
         } else {
             // go to like
-            // go to unlike
-            const res = await useAxios({
-                url: "/post/like",
+            const { res, error } = await useAxios({
+                url: endpoints.likePost,
                 method: "POST",
                 body: JSON.stringify({ id: id }),
             });
-            if (res?.status) {
-                fetchPostDetails();
-            } else {
+            if (res) {
+                // fetchPostDetails();
+                setPostDetail(res);
+            }
+            if (error) {
                 setShowMessage({
                     status: "error",
-                    message: "Failed to Unlike the Image",
+                    message: "Failed to Like the Image",
                 });
             }
         }
     };
 
     async function handleCheckout(price) {
-        if (!user || !jwtToken) {
+        if (!user) {
             setShowMessage({ status: "error", message: "Signup First!!" });
             navigate("/signup");
             return;
@@ -151,7 +145,7 @@ const PostDetail = () => {
 
     return (
         <>
-            <div className="flex flex-col items-center w-11/12 m-auto">
+            <div className="flex flex-col items-center w-11/12 mx-auto md:w-[75%]">
                 {/* pricing modal */}
                 <dialog
                     ref={modalRef}
@@ -205,11 +199,11 @@ const PostDetail = () => {
                     </div>
                 ) : null}
                 <ReactMarkdown className="p-4 bg-gray-100 flex-1 prose rounded-lg lg:prose-xl markdown-content max-w-none">
-                    {postDetail?.body}
+                    {postDetail?.description}
                 </ReactMarkdown>
                 <div className="flex justify-between w-full my-2 flex-wrap">
                     <p>
-                        Views : <strong>{postDetail?.views}</strong>
+                        Views : <strong>{postDetail?.views || 0}</strong>
                         <strong className="flex items-center">
                             <button
                                 className={`p-[2px] border-none cursor-pointer mr-2`}
@@ -217,17 +211,18 @@ const PostDetail = () => {
                             >
                                 <FavoriteIcon
                                     style={{ cursor: "pointer" }}
-                                    fill={`${
-                                        postDetail?.likes &&
-                                        postDetail?.likes.find(
-                                            (e) => e == user.id
-                                        )
-                                            ? "red"
-                                            : "black"
-                                    }`}
+                                    // change the color based on if user has already liked this
+                                    // fill={`${
+                                    //     postDetail?.likes &&
+                                    //     postDetail?.likes.find(
+                                    //         (e) => e == user.id
+                                    //     )
+                                    //         ? "red"
+                                    //         : "black"
+                                    // }`}
                                 />
                             </button>{" "}
-                            {postDetail?.likes?.length}
+                            {postDetail?.post_likes}
                         </strong>
                     </p>
                     <div className="flex flex-col items-end">
@@ -237,25 +232,28 @@ const PostDetail = () => {
                         <p>
                             Published On :{" "}
                             <strong>
-                                {postDetail?.updated_at?.split("T")[0]}
+                                {new Date(
+                                    postDetail?.published_at
+                                ).toLocaleDateString()}
                             </strong>
                         </p>
                     </div>
                 </div>
 
-                {user && jwtToken ? (
+                {user ? (
                     <>
                         <div className="self-stretch">
                             {/* <Comments/> */}
                             <p className="text-lg font-semibold">
-                                Comments ({postDetail?.commenters?.length})
+                                Comments ({postDetail?.post_comments})
                             </p>
-                            {postDetail?.comment?.map((comment, ind) => (
+                            {/* Show Post Comment Details */}
+                            {/* {postDetail?.comment?.map((comment, ind) => (
                                 <CommentTab
                                     author={postDetail?.commenters[ind]}
                                     text={postDetail?.comment[ind]}
                                 />
-                            ))}
+                            ))} 
                         </div>
                         <div className="flex self-stretch">
                             <input
@@ -273,7 +271,7 @@ const PostDetail = () => {
                                 onClick={handleCommentPost}
                             >
                                 Post
-                            </button>
+                            </button>*/}
                         </div>
                     </>
                 ) : null}

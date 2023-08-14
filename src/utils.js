@@ -2,8 +2,7 @@ import jwt from "jwt-decode";
 export const checkAuth = () => {
     let res =
         localStorage.getItem("user") &&
-        JSON.parse(localStorage.getItem("user"))?.id &&
-        localStorage.getItem("jwtToken");
+        JSON.parse(localStorage.getItem("user"))?.id 
     if (res) {
         let token = jwt(JSON.parse(localStorage.getItem("jwtToken")));
         res = res && token.id === JSON.parse(localStorage.getItem("user"))?.id;
