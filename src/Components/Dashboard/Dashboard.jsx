@@ -28,6 +28,7 @@ const Dashboard = () => {
                 >
                     Top Posts
                 </button>
+                {/* This API is not available currently in the server, uncomment if API available*/}
                 <button
                     className="m-1 p-1 bg-slate-100 border-[0.5px]"
                     type="button"

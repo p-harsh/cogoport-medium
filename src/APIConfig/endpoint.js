@@ -1,17 +1,17 @@
 // complete and use this to avoid any duplication of endpoints
-export const BASE_URL = 'http://localhost:3000'
+export const BASE_URL = "http://localhost:3000";
 
 export const endpoints = {
     login: "/login",
     signup: "/signup",
     logout: "/logout",
     createProfile: "/profiles/create_profile",
-    getProfile: (id) => `/profile/${id}`,
+    getProfile: (id) => `/profiles/${id}`,
     createPost: "/create",
     updatePost: "/update",
     getPost: "/article", // also used for fetching drafts
     getAllPosts: "/articles",
-    deletePost: '/delete',
+    deletePost: "/delete",
     likePost: "/like",
     getAllDrafts: "/drafts",
     getRevisionDraft: "/revisions",
@@ -22,6 +22,7 @@ export const endpoints = {
     addList: "/playlists",
     addPostToList: "/playlists/add_article",
     topPosts: "/top_posts",
-    recommendedPosts: "/recommendedPosts",
-    currentUser: '/current_user'
+    recommendedPosts: "/recommended_posts",
+    currentUser: "/current_user",
+    searchProfile: (query) => encodeURI(`/profiles/search?query=${query}`),
 };

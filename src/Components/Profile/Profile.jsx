@@ -132,7 +132,7 @@ const Profile = (props) => {
                 ) : null}
                 <div className="text-xl text-center">
                     <p className="text-3xl font-semibold">{details.name}</p>
-                    <p className="font-light">{details.bio}</p>
+                    <p className="font-light">@{details.bio}</p>
                 </div>
                 <div
                     className="flex justify-between
